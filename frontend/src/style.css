@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* k-ui 设计令牌 + 组件基础类（含 @theme / @layer，必须交给 Tailwind 处理）*/
+@import "@guoyg578/k-ui/styles/tokens.css";
+@import "@guoyg578/k-ui/styles/components.css";
+
+/* 已编译的组件作用域样式 */
+@import "@guoyg578/k-ui/css";
+
+/* Leaflet 地图样式 */
+@import "leaflet/dist/leaflet.css";
+
+/* 让 Tailwind 扫描 k-ui 产物里出现的工具类 */
+@source "../node_modules/@guoyg578/k-ui/dist";
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}

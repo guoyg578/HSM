@@ -1,0 +1,15 @@
+services:
+  hsm:
+    build: .
+    image: ham-station-manager:1.1
+    container_name: ham-station-manager
+    ports:
+      - "8000:8000"
+    volumes:
+      # NAS 本地目录 → 容器 /data（数据库 / 录音 / QSL 图片 / 导出文件）
+      - ./data:/data
+    environment:
+      # 自动备份间隔（小时）与保留份数，可按需调整
+      - BACKUP_INTERVAL_HOURS=24
+      - BACKUP_KEEP=7
+    restart: unless-stopped
