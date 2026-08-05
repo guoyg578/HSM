@@ -129,6 +129,9 @@ def test_adif_roundtrip():
             "rst_rcvd": "55",
             "qth": "东京",
             "grid": "PM95",
+            "their_equipment": "ICOM IC-7300",
+            "their_antenna": "GP天线",
+            "their_power": "100W",
         },
     )
 
@@ -162,6 +165,10 @@ def test_adif_roundtrip():
     assert item["rst_rcvd"] == "55"
     # 导出携带了 STATION_CALLSIGN → 导入时保留原快照呼号
     assert item["my_callsign"] == "BG5TEST"
+    # 对方设备/天线/功率经 RIG / APP_HSM_THEIR_ANTENNA / RX_PWR 往返保留
+    assert item["their_equipment"] == "ICOM IC-7300"
+    assert item["their_antenna"] == "GP天线"
+    assert item["their_power"] == "100W"
 
 
 def test_backup():

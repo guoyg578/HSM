@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 import models  # noqa: F401  确保建表前模型已注册
 from backup import start_backup_thread, stop_backup_thread
 from config import AUDIO_DIR, QSL_DIR, ensure_dirs
-from database import Base, engine
+from database import Base, engine, run_migrations
 from routers import adif_router, files, qsos, stations, stats
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,7 @@ FRONTEND_DIST = Path(__file__).parent / "frontend" / "dist"
 async def lifespan(app: FastAPI):
     ensure_dirs()
     Base.metadata.create_all(engine)
+    run_migrations()
     start_backup_thread()
     yield
     stop_backup_thread()

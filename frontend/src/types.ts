@@ -52,6 +52,9 @@ export interface QSO {
   qth: string
   grid: string
   distance_km: number | null
+  their_equipment: string
+  their_antenna: string
+  their_power: string
   remark: string
   audio_path: string
   qsl_path: string

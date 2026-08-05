@@ -99,6 +99,11 @@ class QSO(Base):
     audio_path: Mapped[str] = mapped_column(String(300), default="")
     qsl_path: Mapped[str] = mapped_column(String(300), default="")
 
+    # 对方台站信息（手动填写）
+    their_equipment: Mapped[str] = mapped_column(String(200), default="")
+    their_antenna: Mapped[str] = mapped_column(String(200), default="")
+    their_power: Mapped[str] = mapped_column(String(50), default="")
+
     my_callsign: Mapped[str] = mapped_column(String(20), default="")
     my_qth: Mapped[str] = mapped_column(String(200), default="")
     my_grid: Mapped[str] = mapped_column(String(10), default="")

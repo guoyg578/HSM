@@ -114,9 +114,12 @@ const COLUMN_DEFS: { key: string; label: string; always?: boolean }[] = [
   { key: 'qth', label: '对方QTH' },
   { key: 'grid', label: '网格' },
   { key: 'distance', label: '距离(km)' },
-  { key: 'equipment', label: '设备' },
-  { key: 'antenna', label: '天线' },
-  { key: 'power', label: '功率' },
+  { key: 'equipment', label: '我的设备' },
+  { key: 'antenna', label: '我的天线' },
+  { key: 'power', label: '我的功率' },
+  { key: 'their_equipment', label: '对方设备' },
+  { key: 'their_antenna', label: '对方天线' },
+  { key: 'their_power', label: '对方功率' },
   { key: 'remark', label: '备注' },
 ]
 
@@ -274,6 +277,9 @@ async function deleteStation() {
           <template #cell-equipment="{ row }">{{ row.my_equipment }}</template>
           <template #cell-antenna="{ row }">{{ row.my_antenna }}</template>
           <template #cell-power="{ row }">{{ row.my_power }}</template>
+          <template #cell-their_equipment="{ row }">{{ row.their_equipment }}</template>
+          <template #cell-their_antenna="{ row }">{{ row.their_antenna }}</template>
+          <template #cell-their_power="{ row }">{{ row.their_power }}</template>
           <template #cell-remark="{ row }">{{ row.remark }}</template>
           <template #cell-actions="{ row }">
             <div class="flex justify-end gap-1">
@@ -357,6 +363,14 @@ async function deleteStation() {
                   </div>
                   <div class="mt-0.5 text-[10px] text-gray-400">距离</div>
                 </div>
+              </div>
+
+              <div
+                v-if="q.their_equipment || q.their_antenna || q.their_power"
+                class="mt-2 truncate text-xs text-gray-400"
+                :title="[q.their_equipment, q.their_antenna, q.their_power].filter(Boolean).join(' · ')"
+              >
+                对方：{{ [q.their_equipment, q.their_antenna, q.their_power].filter(Boolean).join(' · ') }}
               </div>
 
               <audio

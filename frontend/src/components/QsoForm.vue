@@ -40,6 +40,9 @@ const model = ref({
   qth: '',
   grid: '',
   distance_km: null as number | null,
+  their_equipment: '',
+  their_antenna: '',
+  their_power: '',
   remark: '',
   qsl_path: '',
   audio_path: '',
@@ -72,6 +75,9 @@ watch(
       qth: q?.qth ?? '',
       grid: q?.grid ?? '',
       distance_km: q?.distance_km ?? null,
+      their_equipment: q?.their_equipment ?? '',
+      their_antenna: q?.their_antenna ?? '',
+      their_power: q?.their_power ?? '',
       remark: q?.remark ?? '',
       qsl_path: q?.qsl_path ?? '',
       audio_path: q?.audio_path ?? '',
@@ -148,6 +154,9 @@ async function save() {
       qth: model.value.qth,
       grid: model.value.grid.trim(),
       distance_km: model.value.distance_km,
+      their_equipment: model.value.their_equipment,
+      their_antenna: model.value.their_antenna,
+      their_power: model.value.their_power,
       remark: model.value.remark,
       qsl_path: model.value.qsl_path,
       audio_path: model.value.audio_path,
@@ -239,7 +248,19 @@ async function save() {
           <span class="mb-1 block text-xs text-gray-500">对方 Grid</span>
           <KInput v-model="model.grid" placeholder="如：PM01" />
         </label>
-        <label class="col-span-2 block">
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">对方设备</span>
+          <KInput v-model="model.their_equipment" placeholder="如：ICOM IC-7300" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">对方天馈</span>
+          <KInput v-model="model.their_antenna" placeholder="如：GP 天线" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">对方功率</span>
+          <KInput v-model="model.their_power" placeholder="如：100W" />
+        </label>
+        <label class="block">
           <span class="mb-1 block text-xs text-gray-500">
             距离（公里）
             <template v-if="previewDistance !== null && model.distance_km === null">

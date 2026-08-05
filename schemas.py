@@ -88,6 +88,9 @@ class QSOBase(BaseModel):
     qth: str = ""
     grid: str = ""
     distance_km: float | None = None
+    their_equipment: str = ""
+    their_antenna: str = ""
+    their_power: str = ""
     remark: str = ""
     audio_path: str = ""
     qsl_path: str = ""
@@ -115,6 +118,9 @@ class QSOUpdate(BaseModel):
     qth: str | None = None
     grid: str | None = None
     distance_km: float | None = None
+    their_equipment: str | None = None
+    their_antenna: str | None = None
+    their_power: str | None = None
     remark: str | None = None
     audio_path: str | None = None
     qsl_path: str | None = None
