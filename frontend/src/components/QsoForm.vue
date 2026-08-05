@@ -233,22 +233,6 @@ async function save() {
           <KSelect v-model="model.mode" :options="MODE_OPTIONS" />
         </label>
         <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">RST 发送（我给对方）</span>
-          <KInput v-model="model.rst_sent" placeholder="59" />
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">RST 收到（对方给我）</span>
-          <KInput v-model="model.rst_rcvd" placeholder="59" />
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">对方 QTH</span>
-          <KInput v-model="model.qth" placeholder="如：上海" />
-        </label>
-        <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">对方 Grid</span>
-          <KInput v-model="model.grid" placeholder="如：PM01" />
-        </label>
-        <label class="block">
           <span class="mb-1 block text-xs text-gray-500">对方设备</span>
           <KInput v-model="model.their_equipment" placeholder="如：ICOM IC-7300" />
         </label>
@@ -259,6 +243,22 @@ async function save() {
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">对方功率</span>
           <KInput v-model="model.their_power" placeholder="如：100W" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">对方 QTH</span>
+          <KInput v-model="model.qth" placeholder="如：上海" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">RST 发送（我给对方）</span>
+          <KInput v-model="model.rst_sent" placeholder="59" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">RST 收到（对方给我）</span>
+          <KInput v-model="model.rst_rcvd" placeholder="59" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">对方 Grid</span>
+          <KInput v-model="model.grid" placeholder="如：PM01" />
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">
