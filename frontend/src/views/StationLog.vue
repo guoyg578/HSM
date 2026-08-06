@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   KButton,
   KCheckbox,
@@ -23,14 +24,36 @@ type SortState = { columnKey: string; order: 'ascend' | 'descend' }
 import { FileDown, List, Map as MapIcon, Pencil, Plus, Settings, Table as TableIcon, Trash2 } from '@lucide/vue'
 import type { QSO, StationDetail } from '../types'
 import { api } from '../api'
-import { loadColumns, loadViewMode, saveColumns, saveViewMode, type ViewMode } from '../prefs'
+import { loadColumns, loadViewMode, saveColumns, saveLastStation, saveViewMode, type ViewMode } from '../prefs'
 import { fmtDate, fmtFreq, fmtTime } from '../utils'
+import { refreshStations } from '../store'
 import QsoForm from '../components/QsoForm.vue'
 import AdifDialog from '../components/AdifDialog.vue'
 import QsoMap from '../components/QsoMap.vue'
+import ConfigPanel from '../components/ConfigPanel.vue'
+import StationDialog from '../components/StationDialog.vue'
 
-const props = defineProps<{ station: StationDetail }>()
-const emit = defineEmits<{ 'edit-station': []; 'station-deleted': [] }>()
+const route = useRoute()
+const router = useRouter()
+
+// 电台 id 来自路由；App 层用 route.path 作 key，切换电台时本组件整体重建
+const stationId = Number(route.params.id)
+const station = ref<StationDetail | null>(null)
+const editOpen = ref(false)
+
+async function loadStation() {
+  try {
+    station.value = await api.getStation(stationId)
+    saveLastStation(stationId)
+  } catch (e) {
+    KMessage.error(`加载电台失败: ${(e as Error).message}`)
+    router.replace('/dashboard')
+  }
+}
+
+async function onStationSaved() {
+  await Promise.all([loadStation(), refreshStations()])
+}
 
 // ---- 状态 ----
 const viewMode = ref<ViewMode>(loadViewMode())
@@ -63,7 +86,7 @@ async function fetchQsos() {
     // 时间线模式固定按时间倒序（按日期分组展示的前提）
     const timeline = viewMode.value === 'timeline'
     const result = await api.listQsos({
-      station_id: props.station.id,
+      station_id: stationId,
       q: search.value || undefined,
       sort_by: timeline
         ? 'date'
@@ -89,7 +112,10 @@ watch(search, () => {
   }, 300)
 })
 watch([page, sortState], fetchQsos)
-onMounted(fetchQsos)
+onMounted(() => {
+  loadStation()
+  fetchQsos()
+})
 
 // ---- 时间线卡片头图渐变（无 QSL 图片时按 id 轮换） ----
 const GRADIENTS = [
@@ -160,9 +186,10 @@ async function deleteQso(q: QSO) {
 
 async function deleteStation() {
   try {
-    await api.deleteStation(props.station.id)
+    await api.deleteStation(stationId)
     KMessage.success('电台已删除')
-    emit('station-deleted')
+    await refreshStations()
+    router.replace('/dashboard')
   } catch (e) {
     KMessage.error(`删除失败: ${(e as Error).message}`)
   }
@@ -170,7 +197,11 @@ async function deleteStation() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col">
+  <div v-if="!station" class="flex h-full items-center justify-center text-sm text-gray-400">
+    加载中…
+  </div>
+  <div v-else class="flex h-full">
+  <div class="flex min-w-0 flex-1 flex-col">
     <!-- 顶部：电台信息 + 操作 -->
     <div class="border-b border-gray-200 bg-white px-6 py-4">
       <div class="flex items-center justify-between">
@@ -178,7 +209,7 @@ async function deleteStation() {
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold">{{ station.name }}</h1>
             <KTag size="sm" type="info">{{ station.callsign }}</KTag>
-            <KButton size="sm" text title="编辑电台" @click="emit('edit-station')">
+            <KButton size="sm" text title="编辑电台" @click="editOpen = true">
               <Pencil class="size-3.5" />
             </KButton>
             <KPopconfirm
@@ -413,6 +444,15 @@ async function deleteStation() {
         </div>
       </template>
     </div>
+    </div>
+
+    <!-- 右侧：当前电台配置 -->
+    <aside class="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white">
+      <ConfigPanel :station="station" @changed="loadStation" />
+    </aside>
+
+    <!-- 编辑电台对话框 -->
+    <StationDialog v-model:open="editOpen" :station="station" @saved="onStationSaved" />
 
     <!-- 通联地图对话框 -->
     <KDialog

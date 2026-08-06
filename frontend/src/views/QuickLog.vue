@@ -2,12 +2,10 @@
 import { onMounted, ref, watch } from 'vue'
 import { KButton, KEmpty, KInput, KInputNumber, KMessage, KSelect } from '@guoyg578/k-ui'
 import { Zap } from '@lucide/vue'
-import type { Station } from '../types'
 import { api } from '../api'
 import { loadLastStation, saveLastStation } from '../prefs'
 import { MODE_OPTIONS } from '../utils'
-
-const props = defineProps<{ stations: Station[] }>()
+import { stations } from '../store'
 
 const stationId = ref<number | null>(null)
 const call = ref('')
@@ -18,11 +16,15 @@ const rstRcvd = ref('59')
 const saving = ref(false)
 const savedCount = ref(0)
 
-onMounted(() => {
+// 电台列表由 store 异步加载，就绪后再选默认电台
+function pickDefaultStation() {
+  if (stationId.value) return
   const last = loadLastStation()
-  if (last && props.stations.some((s) => s.id === last)) stationId.value = last
-  else if (props.stations.length) stationId.value = props.stations[0]!.id
-})
+  if (last && stations.value.some((s) => s.id === last)) stationId.value = last
+  else if (stations.value.length) stationId.value = stations.value[0]!.id
+}
+onMounted(pickDefaultStation)
+watch(() => stations.value.length, pickDefaultStation)
 
 watch(stationId, (id) => {
   if (id) saveLastStation(id)
@@ -63,7 +65,8 @@ async function save() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-md p-6">
+  <div class="h-full overflow-y-auto p-6">
+  <div class="mx-auto max-w-md">
     <div class="mb-1 flex items-center gap-2">
       <Zap class="size-5 text-amber-500" />
       <h1 class="text-xl font-bold">快速记录</h1>
@@ -109,5 +112,6 @@ async function save() {
         本次会话已记录 {{ savedCount }} 条
       </div>
     </div>
+  </div>
   </div>
 </template>

@@ -10,11 +10,10 @@ import {
   TrendingUp,
   Waves,
 } from '@lucide/vue'
-import type { QSO, Station, Stats } from '../types'
+import type { QSO, Stats } from '../types'
 import { api } from '../api'
 import { fmtDateTime, fmtFreq } from '../utils'
-
-const props = defineProps<{ stations: Station[] }>()
+import { stations } from '../store'
 
 const stats = ref<Stats | null>(null)
 const allQsos = ref<QSO[]>([])
@@ -35,7 +34,7 @@ async function load() {
 }
 
 watch(filterStation, load)
-watch(() => props.stations.length, load)
+watch(() => stations.value.length, load)
 onMounted(load)
 
 const recent = computed(() => allQsos.value.slice(0, 8))
@@ -88,7 +87,7 @@ const medalColors = ['text-amber-500', 'text-gray-400', 'text-orange-400']
 </script>
 
 <template>
-  <div class="p-6">
+  <div class="h-full overflow-y-auto p-6">
     <div class="mb-5 flex items-center justify-between">
       <h1 class="text-xl font-bold">电台统计</h1>
       <div class="w-52">

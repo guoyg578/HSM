@@ -6,7 +6,6 @@ const KEYS = {
   viewMode: 'hsm.viewMode',
   columns: 'hsm.columns',
   lastStation: 'hsm.lastStation',
-  activeView: 'hsm.activeView',
 }
 
 export const DEFAULT_COLUMNS = ['date', 'time', 'call', 'freq', 'mode', 'rst', 'qth']
@@ -34,15 +33,6 @@ export function loadColumns(): string[] {
 
 export function saveColumns(cols: string[]): void {
   localStorage.setItem(KEYS.columns, JSON.stringify(cols))
-}
-
-/** 当前所在页面：'dashboard' | 'quick' | 'st:<id>'，刷新后原样还原 */
-export function loadActiveView(): string {
-  return localStorage.getItem(KEYS.activeView) ?? 'dashboard'
-}
-
-export function saveActiveView(key: string): void {
-  localStorage.setItem(KEYS.activeView, key)
 }
 
 export function loadLastStation(): number | null {
