@@ -1,11 +1,23 @@
-/* 通用工具：UTC 时间格式化、Maidenhead 网格换算（前端预览距离用）。 */
+/* 通用工具：时间格式化（存储为 UTC，展示统一转北京/本地时间）、Maidenhead 网格换算。 */
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+function parseUtc(iso: string): Date {
+  return new Date(iso.endsWith('Z') ? iso : `${iso}Z`)
+}
+
+/** Date → 本地日期串 yyyy-MM-dd */
+export function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
 export function fmtDate(iso: string): string {
-  return iso.slice(0, 10)
+  return dateKey(parseUtc(iso))
 }
 
 export function fmtTime(iso: string): string {
-  return iso.slice(11, 16)
+  const d = parseUtc(iso)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export function fmtDateTime(iso: string): string {

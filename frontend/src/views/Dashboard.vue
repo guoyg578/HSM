@@ -12,7 +12,7 @@ import {
 } from '@lucide/vue'
 import type { QSO, Stats } from '../types'
 import { api } from '../api'
-import { fmtDateTime, fmtFreq } from '../utils'
+import { dateKey, fmtDate, fmtDateTime, fmtFreq } from '../utils'
 import { stations } from '../store'
 
 const stats = ref<Stats | null>(null)
@@ -59,16 +59,16 @@ const modeMax = computed(() => Math.max(1, ...modeDist.value.map((d) => d.count)
 
 // 近 30 天每日通联数
 const dailyActivity = computed(() => {
+  // 按北京/本地日期分桶，与列表展示一致
   const counts = new Map<string, number>()
   for (const q of allQsos.value) {
-    const d = q.datetime_utc.slice(0, 10)
+    const d = fmtDate(q.datetime_utc)
     counts.set(d, (counts.get(d) ?? 0) + 1)
   }
   const days: { date: string; count: number }[] = []
   const today = new Date()
   for (let i = 29; i >= 0; i--) {
-    const d = new Date(today.getTime() - i * 86400_000)
-    const key = d.toISOString().slice(0, 10)
+    const key = dateKey(new Date(today.getTime() - i * 86400_000))
     days.push({ date: key, count: counts.get(key) ?? 0 })
   }
   return days

@@ -131,7 +131,7 @@ function coverGradient(q: QSO): string {
 // ---- 表格列 ----
 const COLUMN_DEFS: { key: string; label: string; always?: boolean }[] = [
   { key: 'date', label: '日期' },
-  { key: 'time', label: '时间(UTC)' },
+  { key: 'time', label: '时间' },
   { key: 'call', label: '呼号' },
   { key: 'freq', label: '频率' },
   { key: 'band', label: '波段' },

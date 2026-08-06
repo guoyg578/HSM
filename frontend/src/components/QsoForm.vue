@@ -49,9 +49,19 @@ const model = ref({
   my_power: null as string | null,
 })
 
+// 表单内显示/输入北京时间（浏览器本地时区），存库统一 UTC。
 // KDatePicker(enableTime) 的模型格式为 "yyyy-MM-dd HH:mm"
-function nowUtcString(): string {
-  return new Date().toISOString().slice(0, 16).replace('T', ' ')
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+function utcIsoToLocal(iso: string): string {
+  return toLocalInput(new Date(iso.endsWith('Z') ? iso : `${iso}Z`))
+}
+
+function localToUtcIso(value: string): string {
+  return new Date(value.replace(' ', 'T')).toISOString().slice(0, 19)
 }
 
 watch(
@@ -66,7 +76,7 @@ watch(
     }
     const q = props.qso
     model.value = {
-      datetime: q ? q.datetime_utc.slice(0, 16).replace('T', ' ') : nowUtcString(),
+      datetime: q ? utcIsoToLocal(q.datetime_utc) : toLocalInput(new Date()),
       call: q?.call ?? '',
       freq_mhz: q?.freq_mhz ?? null,
       mode: q?.mode || 'FM',
@@ -143,9 +153,7 @@ async function save() {
   saving.value = true
   try {
     const payload: Record<string, unknown> = {
-      datetime_utc: model.value.datetime
-        ? `${model.value.datetime.replace(' ', 'T')}:00`
-        : null,
+      datetime_utc: model.value.datetime ? localToUtcIso(model.value.datetime) : null,
       call: model.value.call.trim().toUpperCase(),
       freq_mhz: model.value.freq_mhz,
       mode: model.value.mode,
@@ -211,7 +219,7 @@ async function save() {
 
       <div class="grid grid-cols-2 gap-3">
         <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">时间（UTC）</span>
+          <span class="mb-1 block text-xs text-gray-500">时间（北京时间，存储自动转 UTC）</span>
           <KDatePicker v-model="model.datetime" enable-time placeholder="选择日期时间" />
         </label>
         <label class="block">
