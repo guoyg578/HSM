@@ -192,6 +192,7 @@ async function save() {
     :open="open"
     :title="qso ? '编辑 QSO' : '新建 QSO'"
     size="lg"
+    width="min(640px, 100vw)"
     @update:open="emit('update:open', $event)"
   >
     <div class="space-y-4 pb-4">
@@ -217,7 +218,7 @@ async function save() {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">时间（北京时间，存储自动转 UTC）</span>
           <KDatePicker v-model="model.datetime" enable-time placeholder="选择日期时间" />
@@ -290,7 +291,7 @@ async function save() {
       </label>
 
       <!-- QSL 图片 / 录音 -->
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <span class="mb-1 block text-xs text-gray-500">QSL 图片</span>
           <KUpload

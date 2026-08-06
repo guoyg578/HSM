@@ -7,6 +7,7 @@ import {
   KCheckboxGroup,
   KDataTable,
   KDialog,
+  KDrawer,
   KEmpty,
   KImage,
   KMessage,
@@ -21,7 +22,7 @@ import {
 import type { Column } from '@guoyg578/k-ui'
 
 type SortState = { columnKey: string; order: 'ascend' | 'descend' }
-import { FileDown, List, Map as MapIcon, Pencil, Plus, Settings, Table as TableIcon, Trash2 } from '@lucide/vue'
+import { FileDown, List, Map as MapIcon, PanelRight, Pencil, Plus, Settings, Table as TableIcon, Trash2 } from '@lucide/vue'
 import type { QSO, StationDetail } from '../types'
 import { api } from '../api'
 import { loadColumns, loadViewMode, saveColumns, saveLastStation, saveViewMode, type ViewMode } from '../prefs'
@@ -40,6 +41,7 @@ const router = useRouter()
 const stationId = Number(route.params.id)
 const station = ref<StationDetail | null>(null)
 const editOpen = ref(false)
+const configOpen = ref(false)
 
 async function loadStation() {
   try {
@@ -203,8 +205,8 @@ async function deleteStation() {
   <div v-else class="flex h-full">
   <div class="flex min-w-0 flex-1 flex-col">
     <!-- 顶部：电台信息 + 操作 -->
-    <div class="border-b border-gray-200 bg-white px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+      <div class="flex flex-wrap items-center justify-between gap-y-2">
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold">{{ station.name }}</h1>
@@ -227,19 +229,14 @@ async function deleteStation() {
             共 {{ total }} 条通联记录<span v-if="station.qth"> · {{ station.qth }}</span>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <KButton @click="adifOpen = true">
-            <FileDown class="mr-1 size-4" /> ADIF
-          </KButton>
-          <KButton type="primary" @click="newQso">
-            <Plus class="mr-1 size-4" /> 新建 QSO
-          </KButton>
-        </div>
+        <KButton type="primary" @click="newQso">
+          <Plus class="mr-1 size-4" /> 新建 QSO
+        </KButton>
       </div>
 
-      <!-- 工具栏：搜索 + 模式切换 + 列设置 -->
-      <div class="mt-3 flex items-center gap-3">
-        <div class="w-72">
+      <!-- 工具栏：搜索 + 模式切换 + 列设置 + 次要操作 -->
+      <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+        <div class="w-full sm:w-72">
           <KSearchBar v-model="search" placeholder="搜索呼号 / QTH / 备注" />
         </div>
         <KRadioGroup v-model="viewMode" button size="sm">
@@ -263,11 +260,22 @@ async function deleteStation() {
             </div>
           </template>
         </KPopover>
+
+        <div class="ml-auto flex items-center gap-2">
+          <div class="xl:hidden">
+            <KButton size="sm" title="电台配置" @click="configOpen = true">
+              <PanelRight class="size-4" />
+            </KButton>
+          </div>
+          <KButton size="sm" @click="adifOpen = true">
+            <FileDown class="mr-1 size-3.5" /> ADIF
+          </KButton>
+        </div>
       </div>
     </div>
 
     <!-- 内容区 -->
-    <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6">
       <KEmpty
         v-if="!loading && !qsos.length"
         title="暂无通联记录"
@@ -276,6 +284,7 @@ async function deleteStation() {
 
       <!-- 表格模式 -->
       <template v-else-if="viewMode === 'table'">
+        <div class="overflow-x-auto rounded-lg">
         <KDataTable
           :columns="columns"
           :rows="qsos"
@@ -325,6 +334,7 @@ async function deleteStation() {
             </div>
           </template>
         </KDataTable>
+        </div>
         <div class="mt-4 flex justify-end">
           <KPagination v-model:page="page" :page-size="pageSize" :total="total" show-summary />
         </div>
@@ -415,7 +425,7 @@ async function deleteStation() {
                 <div class="min-w-0 flex-1 truncate text-xs text-gray-400" :title="q.remark">
                   {{ q.remark || [q.my_equipment, q.my_power].filter(Boolean).join(' · ') }}
                 </div>
-                <div class="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <div class="flex shrink-0 gap-0.5">
                   <KButton
                     v-if="q.grid || q.my_grid"
                     size="sm"
@@ -446,10 +456,19 @@ async function deleteStation() {
     </div>
     </div>
 
-    <!-- 右侧：当前电台配置 -->
-    <aside class="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white">
+    <!-- 右侧：当前电台配置（大屏常驻，小屏抽屉） -->
+    <aside class="hidden w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white xl:block">
       <ConfigPanel :station="station" @changed="loadStation" />
     </aside>
+    <KDrawer
+      :open="configOpen"
+      title="电台配置"
+      placement="right"
+      width="min(320px, 90vw)"
+      @update:open="(v: boolean) => (configOpen = v)"
+    >
+      <ConfigPanel :station="station" @changed="loadStation" />
+    </KDrawer>
 
     <!-- 编辑电台对话框 -->
     <StationDialog v-model:open="editOpen" :station="station" @saved="onStationSaved" />
@@ -460,7 +479,7 @@ async function deleteStation() {
       :title="mapQso ? `${mapQso.my_callsign || '本台'} ⇋ ${mapQso.call}` : ''"
       :subtitle="mapQso?.distance_km ? `距离约 ${mapQso.distance_km} km` : ''"
       size="xl"
-      width="1000px"
+      width="min(1000px, 96vw)"
       @update:open="(v: boolean) => { if (!v) mapQso = null }"
     >
       <div v-if="mapQso" class="h-[65vh]">

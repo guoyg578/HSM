@@ -87,7 +87,7 @@ const medalColors = ['text-amber-500', 'text-gray-400', 'text-orange-400']
 </script>
 
 <template>
-  <div class="h-full overflow-y-auto p-6">
+  <div class="h-full overflow-y-auto p-4 sm:p-6">
     <div class="mb-5 flex items-center justify-between">
       <h1 class="text-xl font-bold">电台统计</h1>
       <div class="w-52">
@@ -111,7 +111,7 @@ const medalColors = ['text-amber-500', 'text-gray-400', 'text-orange-400']
         >
           <RadioTower class="absolute -right-6 -top-6 size-40 opacity-10" />
           <div class="text-sm font-medium text-blue-100">累计 QSO</div>
-          <div class="my-2 text-6xl font-semibold leading-none">
+          <div class="my-2 text-5xl font-semibold leading-none sm:text-6xl">
             {{ stats.total_qso.toLocaleString() }}
           </div>
           <div class="flex items-center gap-2 text-sm text-blue-100">

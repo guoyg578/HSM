@@ -77,7 +77,7 @@ async function save() {
     @cancel="emit('update:open', false)"
   >
     <KForm :model="model" label-position="top">
-      <div class="grid grid-cols-2 gap-x-4">
+      <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
         <KFormField name="name" label="电台名称" required>
           <KInput v-model="model.name" placeholder="如：家庭电台" />
         </KFormField>

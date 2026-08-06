@@ -125,7 +125,7 @@ const dialogTitles: Record<DialogKind, string> = {
           <KTag v-if="e.type" size="sm" class="mt-1">{{ e.type }}</KTag>
         </div>
         <KPopconfirm message="确定删除该设备？" confirm-type="danger" @confirm="remove('equipment', e.id)">
-          <KButton size="sm" text class="opacity-0 group-hover:opacity-100">
+          <KButton size="sm" text>
             <Trash2 class="size-3.5 text-red-500" />
           </KButton>
         </KPopconfirm>
@@ -150,7 +150,7 @@ const dialogTitles: Record<DialogKind, string> = {
       >
         <div class="font-medium">{{ a.name }}</div>
         <KPopconfirm message="确定删除该天线？" confirm-type="danger" @confirm="remove('antenna', a.id)">
-          <KButton size="sm" text class="opacity-0 group-hover:opacity-100">
+          <KButton size="sm" text>
             <Trash2 class="size-3.5 text-red-500" />
           </KButton>
         </KPopconfirm>
@@ -178,7 +178,7 @@ const dialogTitles: Record<DialogKind, string> = {
           <span class="ml-2 text-gray-500">{{ p.power_watts }}W</span>
         </div>
         <KPopconfirm message="确定删除该配置？" confirm-type="danger" @confirm="remove('power', p.id)">
-          <KButton size="sm" text class="opacity-0 group-hover:opacity-100">
+          <KButton size="sm" text>
             <Trash2 class="size-3.5 text-red-500" />
           </KButton>
         </KPopconfirm>
