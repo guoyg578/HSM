@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hsm-data
+  namespace: hsm
+spec:
+  # SQLite 单写入者，只能 RWO；不指定 storageClassName，使用集群默认
+  # （docker-desktop: hostpath；k3s: local-path；NAS 上可改为 NFS 等）
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hsm
+  namespace: hsm
+  labels:
+    app: hsm
+spec:
+  # SQLite 不支持多写入者，必须保持单副本
+  replicas: 1
+  strategy:
+    # 先停旧 Pod 再起新 Pod，避免两个实例同时打开数据库文件
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hsm
+  template:
+    metadata:
+      labels:
+        app: hsm
+    spec:
+      containers:
+        - name: hsm
+          image: ham-station-manager:1.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: BACKUP_INTERVAL_HOURS
+              value: "24"
+            - name: BACKUP_KEEP
+              value: "7"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: hsm-data

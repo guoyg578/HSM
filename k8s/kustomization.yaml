@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+
+# 升级版本时只改这里的 newTag，再 kubectl apply -k k8s/
+images:
+  - name: ham-station-manager
+    newTag: "1.4"

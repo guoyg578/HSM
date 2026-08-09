@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hsm
+  namespace: hsm
+  labels:
+    app: hsm
+spec:
+  # docker-desktop / k3s 均内置 LoadBalancer 实现，直接暴露 8000 端口；
+  # 集群没有 LB 时可改为 NodePort
+  type: LoadBalancer
+  selector:
+    app: hsm
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
