@@ -4,15 +4,22 @@ import { KButton, KEmpty, KInput, KInputNumber, KMessage, KSelect } from '@guoyg
 import { Zap } from '@lucide/vue'
 import { api } from '../api'
 import { loadLastStation, saveLastStation } from '../prefs'
-import { MODE_OPTIONS } from '../utils'
+import { appSettings, loadAppSettings, modeOptions } from '../settings'
 import { stations } from '../store'
 
 const stationId = ref<number | null>(null)
 const call = ref('')
 const freq = ref<number | null>(null)
-const mode = ref('FM')
-const rstSent = ref('59')
-const rstRcvd = ref('59')
+const mode = ref(appSettings.value.default_mode)
+const rstSent = ref(appSettings.value.default_rst)
+const rstRcvd = ref(appSettings.value.default_rst)
+
+// 配置异步加载：就绪后套用默认模式 / RST（用户此时尚未输入）
+loadAppSettings().then(() => {
+  mode.value = appSettings.value.default_mode
+  rstSent.value = appSettings.value.default_rst
+  rstRcvd.value = appSettings.value.default_rst
+})
 const saving = ref(false)
 const savedCount = ref(0)
 
@@ -54,8 +61,8 @@ async function save() {
     KMessage.success(`已记录 ${call.value.trim().toUpperCase()}`)
     // 保留频率/模式（连续通联场景），只清呼号和 RST
     call.value = ''
-    rstSent.value = '59'
-    rstRcvd.value = '59'
+    rstSent.value = appSettings.value.default_rst
+    rstRcvd.value = appSettings.value.default_rst
   } catch (e) {
     KMessage.error(`保存失败: ${(e as Error).message}`)
   } finally {
@@ -96,7 +103,7 @@ async function save() {
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">模式</span>
-          <KSelect v-model="mode" :options="MODE_OPTIONS" />
+          <KSelect v-model="mode" :options="modeOptions" />
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">RST 发送</span>

@@ -14,7 +14,8 @@ import {
 import type { UploadCustomRequestOptions } from '@guoyg578/k-ui'
 import type { QSO, QSODefaults } from '../types'
 import { api } from '../api'
-import { gridDistanceKm, MODE_OPTIONS } from '../utils'
+import { appSettings, modeOptions } from '../settings'
+import { gridDistanceKm } from '../utils'
 
 const props = defineProps<{
   open: boolean
@@ -79,9 +80,9 @@ watch(
       datetime: q ? utcIsoToLocal(q.datetime_utc) : toLocalInput(new Date()),
       call: q?.call ?? '',
       freq_mhz: q?.freq_mhz ?? null,
-      mode: q?.mode || 'FM',
-      rst_sent: q?.rst_sent || '59',
-      rst_rcvd: q?.rst_rcvd || '59',
+      mode: q?.mode || appSettings.value.default_mode,
+      rst_sent: q?.rst_sent || appSettings.value.default_rst,
+      rst_rcvd: q?.rst_rcvd || appSettings.value.default_rst,
       qth: q?.qth ?? '',
       grid: q?.grid ?? '',
       distance_km: q?.distance_km ?? null,
@@ -239,7 +240,7 @@ async function save() {
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">模式</span>
-          <KSelect v-model="model.mode" :options="MODE_OPTIONS" />
+          <KSelect v-model="model.mode" :options="modeOptions" />
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">对方设备</span>

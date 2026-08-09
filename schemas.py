@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 # ---------- 电台配置 ----------
@@ -172,6 +172,51 @@ class Stats(BaseModel):
     max_distance_km: float | None = None
     top_band: str = ""
     top_mode: str = ""
+
+
+# ---------- 运行时配置（后台管理） ----------
+class BandRange(BaseModel):
+    low_mhz: float = Field(gt=0)
+    high_mhz: float = Field(gt=0)
+    name: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def check_range(self):
+        if self.high_mhz <= self.low_mhz:
+            raise ValueError(f"波段 {self.name}: 上限必须大于下限")
+        return self
+
+
+class SettingsOut(BaseModel):
+    mode_options: list[str]
+    default_mode: str
+    default_rst: str
+    bands: list[BandRange]
+    backup_interval_hours: int
+    backup_keep: int
+
+
+class SettingsUpdate(BaseModel):
+    mode_options: list[str] | None = Field(None, min_length=1)
+    default_mode: str | None = Field(None, min_length=1)
+    default_rst: str | None = None
+    bands: list[BandRange] | None = None
+    backup_interval_hours: int | None = Field(None, ge=1, le=8760)
+    backup_keep: int | None = Field(None, ge=1, le=365)
+
+    @field_validator("mode_options")
+    @classmethod
+    def clean_modes(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        cleaned: list[str] = []
+        for m in v:
+            m = m.strip()
+            if m and m not in cleaned:
+                cleaned.append(m)
+        if not cleaned:
+            raise ValueError("至少保留一个有效模式")
+        return cleaned
 
 
 # ---------- 通用 ----------

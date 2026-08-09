@@ -10,6 +10,15 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class Setting(Base):
+    """运行时配置（后台管理页编辑）：value 存 JSON 字符串。"""
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(50), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+
+
 class Station(Base):
     """电台档案：固定信息只配置一次。"""
 

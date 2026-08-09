@@ -1,6 +1,7 @@
 import type {
   AdifImportResult,
   Antenna,
+  AppSettings,
   Equipment,
   PowerProfile,
   QSO,
@@ -82,6 +83,13 @@ export const api = {
     form.append('file', file)
     return request<UploadResult>(`/api/upload/${kind}`, { method: 'POST', body: form })
   },
+
+  // ---- 运行时配置（后台管理） ----
+  getSettings: () => request<AppSettings>('/api/settings'),
+  getSettingsDefaults: () => request<AppSettings>('/api/settings/defaults'),
+  updateSettings: (data: Partial<AppSettings>) =>
+    request<AppSettings>('/api/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  backupNow: () => request<{ message: string }>('/api/backup', { method: 'POST' }),
 
   // ---- ADIF ----
   adifImport: (stationId: number, file: File) => {

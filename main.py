@@ -14,7 +14,7 @@ import models  # noqa: F401  确保建表前模型已注册
 from backup import start_backup_thread, stop_backup_thread
 from config import AUDIO_DIR, QSL_DIR, ensure_dirs
 from database import Base, engine, run_migrations
-from routers import adif_router, files, qsos, stations, stats
+from routers import adif_router, files, qsos, settings, stations, stats
 
 logging.basicConfig(level=logging.INFO)
 
@@ -38,6 +38,7 @@ app.include_router(qsos.router)
 app.include_router(stats.router)
 app.include_router(files.router)
 app.include_router(adif_router.router)
+app.include_router(settings.router)
 
 # 上传文件访问（只暴露 audio / qsl，不暴露 database）
 app.mount("/files/audio", StaticFiles(directory=AUDIO_DIR), name="audio")

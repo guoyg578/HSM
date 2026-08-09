@@ -3,8 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { KDrawer, KMenu } from '@guoyg578/k-ui'
 import type { MenuOption } from '@guoyg578/k-ui'
-import { LayoutDashboard, Menu as MenuIcon, Plus, RadioTower, Zap } from '@lucide/vue'
+import { LayoutDashboard, Menu as MenuIcon, Plus, RadioTower, Settings as SettingsIcon, Zap } from '@lucide/vue'
 import type { StationDetail } from './types'
+import { loadAppSettings } from './settings'
 import { refreshStations, stations } from './store'
 import StationDialog from './components/StationDialog.vue'
 
@@ -19,6 +20,7 @@ const menuOpen = ref(false)
 const activeKey = computed(() => {
   if (route.path.startsWith('/station/')) return `st:${route.params.id}`
   if (route.path === '/quick') return 'quick'
+  if (route.path === '/admin') return 'admin'
   return 'dashboard'
 })
 
@@ -27,7 +29,9 @@ const currentTitle = computed(() => {
     const s = stations.value.find((x) => x.id === Number(route.params.id))
     return s?.name ?? '电台'
   }
-  return route.path === '/quick' ? '快速记录' : '首页统计'
+  if (route.path === '/quick') return '快速记录'
+  if (route.path === '/admin') return '后台管理'
+  return '首页统计'
 })
 
 const menuOptions = computed<MenuOption[]>(() => [
@@ -45,6 +49,7 @@ const menuOptions = computed<MenuOption[]>(() => [
   },
   { key: 'div2', type: 'divider' },
   { key: 'new-station', label: '新建电台', icon: Plus },
+  { key: 'admin', label: '后台管理', icon: SettingsIcon },
 ])
 
 function onSelect(key: string) {
@@ -57,6 +62,8 @@ function onSelect(key: string) {
     router.push(`/station/${key.slice(3)}`)
   } else if (key === 'quick') {
     router.push('/quick')
+  } else if (key === 'admin') {
+    router.push('/admin')
   } else {
     router.push('/dashboard')
   }
@@ -67,7 +74,10 @@ async function onStationCreated(station: StationDetail) {
   router.push(`/station/${station.id}`)
 }
 
-onMounted(refreshStations)
+onMounted(() => {
+  refreshStations()
+  loadAppSettings()
+})
 </script>
 
 <template>

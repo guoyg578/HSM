@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
+from app_settings import get_bands
 from database import get_db
 from hamutils import freq_to_band, grid_distance_km
 from routers.stations import build_defaults
@@ -104,7 +105,7 @@ def create_qso(data: schemas.QSOCreate, db: Session = Depends(get_db)):
 
     if fields.get("datetime_utc") is None:
         fields["datetime_utc"] = datetime.now(timezone.utc)
-    _autofill(fields)
+    _autofill(fields, get_bands(db))
 
     qso = models.QSO(**fields)
     db.add(qso)
@@ -131,7 +132,7 @@ def update_qso(qso_id: int, data: schemas.QSOUpdate, db: Session = Depends(get_d
 
     # 频率变了但未显式给波段 → 重算；网格变了但未显式给距离 → 重算
     if "freq_mhz" in changes and "band" not in changes:
-        qso.band = freq_to_band(qso.freq_mhz)
+        qso.band = freq_to_band(qso.freq_mhz, get_bands(db))
     if ("grid" in changes or "my_grid" in changes) and "distance_km" not in changes:
         qso.distance_km = grid_distance_km(qso.my_grid, qso.grid)
     db.commit()
@@ -148,10 +149,10 @@ def delete_qso(qso_id: int, db: Session = Depends(get_db)):
     return schemas.Message()
 
 
-def _autofill(fields: dict) -> None:
+def _autofill(fields: dict, bands: list[tuple[float, float, str]] | None = None) -> None:
     """波段与距离的自动推导（不覆盖显式传入值）。"""
     if not fields.get("band"):
-        fields["band"] = freq_to_band(fields.get("freq_mhz"))
+        fields["band"] = freq_to_band(fields.get("freq_mhz"), bands)
     if fields.get("distance_km") is None:
         fields["distance_km"] = grid_distance_km(
             fields.get("my_grid") or "", fields.get("grid") or ""

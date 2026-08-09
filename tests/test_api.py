@@ -175,3 +175,50 @@ def test_backup():
     resp = client.post("/api/backup")
     assert resp.status_code == 200
     assert "已备份" in resp.json()["message"]
+
+
+def test_settings():
+    # 默认值
+    s = client.get("/api/settings").json()
+    assert "FM" in s["mode_options"]
+    assert s["default_mode"] == "FM"
+    assert s["default_rst"] == "59"
+    assert any(b["name"] == "70cm" for b in s["bands"])
+
+    # 更新：自定义模式列表 + 默认值 + 波段表
+    resp = client.put(
+        "/api/settings",
+        json={
+            "mode_options": ["FM", "NFM", " NFM ", ""],  # 去重去空白
+            "default_mode": "NFM",
+            "default_rst": "55",
+            "bands": [{"low_mhz": 400.0, "high_mhz": 500.0, "name": "70cm宽"}],
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    updated = resp.json()
+    assert updated["mode_options"] == ["FM", "NFM"]
+    assert updated["default_mode"] == "NFM"
+
+    # 波段推导使用配置后的表
+    sid = _create_station()
+    qso = client.post(
+        "/api/qsos", json={"station_id": sid, "call": "BC1CFG", "freq_mhz": 438.5}
+    ).json()
+    assert qso["band"] == "70cm宽"
+
+    # 非法值被拒绝
+    assert client.put("/api/settings", json={"mode_options": []}).status_code == 422
+    assert client.put("/api/settings", json={"backup_keep": 0}).status_code == 422
+    assert (
+        client.put(
+            "/api/settings",
+            json={"bands": [{"low_mhz": 5, "high_mhz": 2, "name": "x"}]},
+        ).status_code
+        == 422
+    )
+
+    # 恢复默认，避免影响其他用例
+    defaults = client.get("/api/settings/defaults").json()
+    assert client.put("/api/settings", json=defaults).status_code == 200
+    assert client.get("/api/settings").json()["default_mode"] == "FM"

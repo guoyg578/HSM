@@ -103,6 +103,21 @@ export interface AdifImportResult {
   errors: string[]
 }
 
+export interface BandRange {
+  low_mhz: number
+  high_mhz: number
+  name: string
+}
+
+export interface AppSettings {
+  mode_options: string[]
+  default_mode: string
+  default_rst: string
+  bands: BandRange[]
+  backup_interval_hours: number
+  backup_keep: number
+}
+
 export interface QSOQuery {
   station_id?: number
   q?: string

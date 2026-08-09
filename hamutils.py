@@ -4,8 +4,8 @@ import re
 
 _GRID_RE = re.compile(r"^[A-Ra-r]{2}[0-9]{2}([A-Xa-x]{2})?([0-9]{2})?$")
 
-# (下限 MHz, 上限 MHz, 波段名) —— 常用业余频段
-_BANDS = [
+# (下限 MHz, 上限 MHz, 波段名) —— 常用业余频段，可在后台管理中覆盖
+DEFAULT_BANDS = [
     (0.1357, 0.1378, "2190m"),
     (0.472, 0.479, "630m"),
     (1.8, 2.0, "160m"),
@@ -73,10 +73,12 @@ def grid_distance_km(grid1: str, grid2: str) -> float | None:
     return round(haversine_km(lat1, lon1, lat2, lon2), 1)
 
 
-def freq_to_band(freq_mhz: float | None) -> str:
+def freq_to_band(
+    freq_mhz: float | None, bands: list[tuple[float, float, str]] | None = None
+) -> str:
     if freq_mhz is None:
         return ""
-    for low, high, name in _BANDS:
+    for low, high, name in bands if bands is not None else DEFAULT_BANDS:
         if low <= freq_mhz <= high:
             return name
     return ""

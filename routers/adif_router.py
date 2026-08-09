@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 import models
 from adif import adif_record_to_qso_fields, export_adif, parse_adif
+from app_settings import get_bands
 from config import EXPORT_DIR
 from database import get_db
 from routers.qsos import _autofill
@@ -53,6 +54,7 @@ async def adif_import(
         raise HTTPException(400, "未解析到任何 ADIF 记录")
 
     defaults = build_defaults(station)
+    bands = get_bands(db)
     imported, skipped, errors = 0, 0, []
     for i, rec in enumerate(records, 1):
         try:
@@ -73,7 +75,7 @@ async def adif_import(
                     fields[key] = getattr(defaults, key)
             if fields["datetime_utc"] is None:
                 fields["datetime_utc"] = datetime.now(timezone.utc)
-            _autofill(fields)
+            _autofill(fields, bands)
             db.add(models.QSO(station_id=station_id, **fields))
             imported += 1
         except Exception as e:  # 单条失败不阻断整体导入

@@ -68,17 +68,3 @@ export function gridDistanceKm(grid1: string, grid2: string): number | null {
     Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2
   return Math.round(2 * 6371 * Math.asin(Math.sqrt(h)) * 10) / 10
 }
-
-export const MODE_OPTIONS = [
-  'FM',
-  'SSB',
-  'CW',
-  'AM',
-  'FT8',
-  'FT4',
-  'RTTY',
-  'DMR',
-  'C4FM',
-  'D-STAR',
-  'Digital',
-].map((m) => ({ value: m, label: m }))
