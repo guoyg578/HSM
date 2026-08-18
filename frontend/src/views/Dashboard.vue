@@ -9,14 +9,17 @@ import {
   RadioTower,
   TrendingUp,
   Waves,
+  Zap,
 } from '@lucide/vue'
 import type { QSO, Stats } from '../types'
 import { api } from '../api'
 import { dateKey, fmtDate, fmtDateTime, fmtFreq } from '../utils'
 import { stations } from '../store'
+import QuickLogDialog from '../components/QuickLogDialog.vue'
 
 const stats = ref<Stats | null>(null)
 const allQsos = ref<QSO[]>([])
+const quickOpen = ref(false)
 // 0 = 全部电台（Select 底层会把 null 字符串化，不能用 null 作选项值）
 const filterStation = ref<number>(0)
 
@@ -88,9 +91,19 @@ const medalColors = ['text-amber-500', 'text-gray-400', 'text-orange-400']
 
 <template>
   <div class="h-full overflow-y-auto p-4 sm:p-6">
-    <div class="mb-5 flex items-center justify-between">
-      <h1 class="text-xl font-bold">电台统计</h1>
-      <div class="w-52">
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <div class="flex shrink-0 items-center gap-3">
+        <h1 class="whitespace-nowrap text-xl font-bold">电台统计</h1>
+        <button
+          type="button"
+          :disabled="!stations.length"
+          class="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-300 bg-amber-100 py-1 pl-2.5 pr-3 text-sm font-medium text-amber-700 transition-colors hover:border-amber-400 hover:bg-amber-200 hover:text-amber-800 active:bg-amber-300/70 disabled:cursor-not-allowed disabled:opacity-50"
+          @click="quickOpen = true"
+        >
+          <Zap class="size-3.5" /> 快速记录
+        </button>
+      </div>
+      <div class="w-32 min-w-0 sm:w-52">
         <KSelect
           v-model="filterStation"
           :options="[
@@ -272,5 +285,7 @@ const medalColors = ['text-amber-500', 'text-gray-400', 'text-orange-400']
         </div>
       </div>
     </template>
+
+    <QuickLogDialog v-model:open="quickOpen" @saved="load" />
   </div>
 </template>

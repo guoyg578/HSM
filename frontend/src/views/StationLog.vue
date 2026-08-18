@@ -28,6 +28,7 @@ import { api } from '../api'
 import { loadColumns, loadViewMode, saveColumns, saveLastStation, saveViewMode, type ViewMode } from '../prefs'
 import { fmtDate, fmtFreq, fmtTime } from '../utils'
 import { refreshStations } from '../store'
+import IconButton from '../components/IconButton.vue'
 import QsoForm from '../components/QsoForm.vue'
 import AdifDialog from '../components/AdifDialog.vue'
 import QsoMap from '../components/QsoMap.vue'
@@ -66,7 +67,8 @@ const pageSize = ref(50)
 const total = ref(0)
 const qsos = ref<QSO[]>([])
 const loading = ref(false)
-const sortState = ref<SortState | null>({ columnKey: 'date', order: 'descend' })
+// 初始为 null：后端默认即按日期降序，不在表头显示排序箭头
+const sortState = ref<SortState | null>(null)
 
 const formOpen = ref(false)
 const editingQso = ref<QSO | null>(null)
@@ -211,19 +213,32 @@ async function deleteStation() {
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold">{{ station.name }}</h1>
             <KTag size="sm" type="info">{{ station.callsign }}</KTag>
-            <KButton size="sm" text title="编辑电台" @click="editOpen = true">
-              <Pencil class="size-3.5" />
-            </KButton>
-            <KPopconfirm
-              title="删除电台"
-              message="将同时删除该电台的全部 QSO 记录，确定？"
-              confirm-type="danger"
-              @confirm="deleteStation"
+            <div
+              class="ml-1 flex items-center divide-x divide-gray-200 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xs"
             >
-              <KButton size="sm" text title="删除电台">
-                <Trash2 class="size-3.5 text-red-500" />
-              </KButton>
-            </KPopconfirm>
+              <button
+                type="button"
+                title="编辑电台"
+                class="inline-flex size-7 cursor-pointer items-center justify-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                @click="editOpen = true"
+              >
+                <Pencil class="size-3.5" />
+              </button>
+              <KPopconfirm
+                title="删除电台"
+                message="将同时删除该电台的全部 QSO 记录，确定？"
+                confirm-type="danger"
+                @confirm="deleteStation"
+              >
+                <button
+                  type="button"
+                  title="删除电台"
+                  class="inline-flex size-7 cursor-pointer items-center justify-center text-gray-500 transition-colors hover:bg-red-50 hover:text-red-500"
+                >
+                  <Trash2 class="size-3.5" />
+                </button>
+              </KPopconfirm>
+            </div>
           </div>
           <div class="mt-0.5 text-xs text-gray-400">
             共 {{ total }} 条通联记录<span v-if="station.qth"> · {{ station.qth }}</span>
@@ -237,7 +252,7 @@ async function deleteStation() {
       <!-- 工具栏：搜索 + 模式切换 + 列设置 + 次要操作 -->
       <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
         <div class="w-full sm:w-72">
-          <KSearchBar v-model="search" placeholder="搜索呼号 / QTH / 备注" />
+          <KSearchBar v-model="search" placeholder="搜索呼号 / QTH / 备注"/>
         </div>
         <KRadioGroup v-model="viewMode" button size="sm">
           <KRadio value="table">
@@ -248,9 +263,9 @@ async function deleteStation() {
           </KRadio>
         </KRadioGroup>
         <KPopover v-if="viewMode === 'table'" side="bottom" align="end">
-          <KButton size="sm" text title="自定义列">
+          <IconButton title="自定义列">
             <Settings class="size-4" />
-          </KButton>
+          </IconButton>
           <template #content>
             <div class="p-2">
               <div class="mb-2 text-xs font-semibold text-gray-400">显示列</div>
@@ -296,7 +311,7 @@ async function deleteStation() {
           row-key="id"
           :sort-state="sortState"
           :pagination="false"
-          @update:sort-state="(s: SortState | null) => (sortState = s ?? { columnKey: 'date', order: 'descend' })"
+          @update:sort-state="(s: SortState | null) => (sortState = s)"
         >
           <template #cell-date="{ row }">{{ fmtDate(row.datetime_utc) }}</template>
           <template #cell-time="{ row }">{{ fmtTime(row.datetime_utc) }}</template>
@@ -323,13 +338,13 @@ async function deleteStation() {
           <template #cell-remark="{ row }">{{ row.remark }}</template>
           <template #cell-actions="{ row }">
             <div class="flex justify-end gap-1">
-              <KButton size="sm" text @click="editQso(row)">
+              <IconButton title="编辑" @click="editQso(row)">
                 <Pencil class="size-3.5" />
-              </KButton>
+              </IconButton>
               <KPopconfirm message="确定删除该 QSO？" confirm-type="danger" @confirm="deleteQso(row)">
-                <KButton size="sm" text>
-                  <Trash2 class="size-3.5 text-red-500" />
-                </KButton>
+                <IconButton title="删除" danger>
+                  <Trash2 class="size-3.5" />
+                </IconButton>
               </KPopconfirm>
             </div>
           </template>
@@ -426,22 +441,16 @@ async function deleteStation() {
                   {{ q.remark || [q.my_equipment, q.my_power].filter(Boolean).join(' · ') }}
                 </div>
                 <div class="flex shrink-0 gap-0.5">
-                  <KButton
-                    v-if="q.grid || q.my_grid"
-                    size="sm"
-                    text
-                    title="显示地图"
-                    @click="mapQso = q"
-                  >
+                  <IconButton v-if="q.grid || q.my_grid" title="显示地图" @click="mapQso = q">
                     <MapIcon class="size-3.5" />
-                  </KButton>
-                  <KButton size="sm" text @click="editQso(q)">
+                  </IconButton>
+                  <IconButton title="编辑" @click="editQso(q)">
                     <Pencil class="size-3.5" />
-                  </KButton>
+                  </IconButton>
                   <KPopconfirm message="确定删除该 QSO？" confirm-type="danger" @confirm="deleteQso(q)">
-                    <KButton size="sm" text>
-                      <Trash2 class="size-3.5 text-red-500" />
-                    </KButton>
+                    <IconButton title="删除" danger>
+                      <Trash2 class="size-3.5" />
+                    </IconButton>
                   </KPopconfirm>
                 </div>
               </div>

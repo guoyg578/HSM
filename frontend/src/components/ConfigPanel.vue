@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  KButton,
   KDialog,
   KInput,
   KInputNumber,
@@ -12,6 +11,7 @@ import {
 import { Antenna as AntennaIcon, Gauge, Plus, Radio, Trash2 } from '@lucide/vue'
 import type { StationDetail } from '../types'
 import { api } from '../api'
+import IconButton from './IconButton.vue'
 
 const props = defineProps<{ station: StationDetail }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -110,9 +110,9 @@ const dialogTitles: Record<DialogKind, string> = {
         <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
           <Radio class="size-3.5" /> 设备
         </div>
-        <KButton size="sm" text @click="openDialog('equipment')">
+        <IconButton title="添加设备" @click="openDialog('equipment')">
           <Plus class="size-4" />
-        </KButton>
+        </IconButton>
       </div>
       <div v-if="!station.equipments.length" class="text-xs text-gray-400">暂无设备</div>
       <div
@@ -125,9 +125,9 @@ const dialogTitles: Record<DialogKind, string> = {
           <KTag v-if="e.type" size="sm" class="mt-1">{{ e.type }}</KTag>
         </div>
         <KPopconfirm message="确定删除该设备？" confirm-type="danger" @confirm="remove('equipment', e.id)">
-          <KButton size="sm" text>
-            <Trash2 class="size-3.5 text-red-500" />
-          </KButton>
+          <IconButton title="删除" danger>
+            <Trash2 class="size-3.5" />
+          </IconButton>
         </KPopconfirm>
       </div>
     </div>
@@ -138,9 +138,9 @@ const dialogTitles: Record<DialogKind, string> = {
         <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
           <AntennaIcon class="size-3.5" /> 天馈系统
         </div>
-        <KButton size="sm" text @click="openDialog('antenna')">
+        <IconButton title="添加天线" @click="openDialog('antenna')">
           <Plus class="size-4" />
-        </KButton>
+        </IconButton>
       </div>
       <div v-if="!station.antennas.length" class="text-xs text-gray-400">暂无天线</div>
       <div
@@ -150,9 +150,9 @@ const dialogTitles: Record<DialogKind, string> = {
       >
         <div class="font-medium">{{ a.name }}</div>
         <KPopconfirm message="确定删除该天线？" confirm-type="danger" @confirm="remove('antenna', a.id)">
-          <KButton size="sm" text>
-            <Trash2 class="size-3.5 text-red-500" />
-          </KButton>
+          <IconButton title="删除" danger>
+            <Trash2 class="size-3.5" />
+          </IconButton>
         </KPopconfirm>
       </div>
     </div>
@@ -163,9 +163,9 @@ const dialogTitles: Record<DialogKind, string> = {
         <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
           <Gauge class="size-3.5" /> 功率配置
         </div>
-        <KButton size="sm" text @click="openDialog('power')">
+        <IconButton title="添加功率配置" @click="openDialog('power')">
           <Plus class="size-4" />
-        </KButton>
+        </IconButton>
       </div>
       <div v-if="!station.power_profiles.length" class="text-xs text-gray-400">暂无功率配置</div>
       <div
@@ -178,9 +178,9 @@ const dialogTitles: Record<DialogKind, string> = {
           <span class="ml-2 text-gray-500">{{ p.power_watts }}W</span>
         </div>
         <KPopconfirm message="确定删除该配置？" confirm-type="danger" @confirm="remove('power', p.id)">
-          <KButton size="sm" text>
-            <Trash2 class="size-3.5 text-red-500" />
-          </KButton>
+          <IconButton title="删除" danger>
+            <Trash2 class="size-3.5" />
+          </IconButton>
         </KPopconfirm>
       </div>
     </div>

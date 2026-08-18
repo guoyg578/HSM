@@ -3,7 +3,18 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { KDrawer, KMenu } from '@guoyg578/k-ui'
 import type { MenuOption } from '@guoyg578/k-ui'
-import { LayoutDashboard, Menu as MenuIcon, Plus, RadioTower, Settings as SettingsIcon, Zap } from '@lucide/vue'
+import {
+  BookUser,
+  CalendarDays,
+  LayoutDashboard,
+  Map as MapIcon,
+  Menu as MenuIcon,
+  Plus,
+  RadioTower,
+  Settings as SettingsIcon,
+  Trophy,
+  Wrench,
+} from '@lucide/vue'
 import type { StationDetail } from './types'
 import { loadAppSettings } from './settings'
 import { refreshStations, stations } from './store'
@@ -16,12 +27,22 @@ const expandedKeys = ref<string[]>(['stations'])
 const createOpen = ref(false)
 const menuOpen = ref(false)
 
+// key ↔ 路由/标题 对照表（电台子项单独处理）
+const PAGES: Record<string, { path: string; title: string }> = {
+  dashboard: { path: '/dashboard', title: '首页统计' },
+  map: { path: '/map', title: '通联地图' },
+  callbook: { path: '/callbook', title: '呼号簿' },
+  calendar: { path: '/calendar', title: '通联日历' },
+  awards: { path: '/awards', title: '成就徽章' },
+  tools: { path: '/tools', title: '工具箱' },
+  admin: { path: '/admin', title: '后台管理' },
+}
+
 // 菜单选中项完全由当前路由推导
 const activeKey = computed(() => {
   if (route.path.startsWith('/station/')) return `st:${route.params.id}`
-  if (route.path === '/quick') return 'quick'
-  if (route.path === '/admin') return 'admin'
-  return 'dashboard'
+  const hit = Object.entries(PAGES).find(([, p]) => p.path === route.path)
+  return hit?.[0] ?? 'dashboard'
 })
 
 const currentTitle = computed(() => {
@@ -29,14 +50,17 @@ const currentTitle = computed(() => {
     const s = stations.value.find((x) => x.id === Number(route.params.id))
     return s?.name ?? '电台'
   }
-  if (route.path === '/quick') return '快速记录'
-  if (route.path === '/admin') return '后台管理'
-  return '首页统计'
+  const hit = Object.values(PAGES).find((p) => p.path === route.path)
+  return hit?.title ?? '首页统计'
 })
 
 const menuOptions = computed<MenuOption[]>(() => [
   { key: 'dashboard', label: '首页统计', icon: LayoutDashboard },
-  { key: 'quick', label: '快速记录', icon: Zap },
+  { key: 'map', label: '通联地图', icon: MapIcon },
+  { key: 'callbook', label: '呼号簿', icon: BookUser },
+  { key: 'calendar', label: '通联日历', icon: CalendarDays },
+  { key: 'awards', label: '成就徽章', icon: Trophy },
+  { key: 'tools', label: '工具箱', icon: Wrench },
   { key: 'div1', type: 'divider' },
   {
     key: 'stations',
@@ -60,12 +84,8 @@ function onSelect(key: string) {
   }
   if (key.startsWith('st:')) {
     router.push(`/station/${key.slice(3)}`)
-  } else if (key === 'quick') {
-    router.push('/quick')
-  } else if (key === 'admin') {
-    router.push('/admin')
   } else {
-    router.push('/dashboard')
+    router.push(PAGES[key]?.path ?? '/dashboard')
   }
 }
 

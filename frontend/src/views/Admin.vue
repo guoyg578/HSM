@@ -4,6 +4,7 @@ import { KButton, KInput, KInputNumber, KMessage, KPopconfirm, KSelect } from '@
 import { ArrowDown, ArrowUp, DatabaseBackup, Plus, Settings as SettingsIcon, Trash2 } from '@lucide/vue'
 import type { AppSettings } from '../types'
 import { api } from '../api'
+import IconButton from '../components/IconButton.vue'
 import { appSettings, loadAppSettings } from '../settings'
 
 const form = ref<AppSettings | null>(null)
@@ -151,21 +152,19 @@ async function backupNow() {
               <div class="w-48">
                 <KInput v-model="form.mode_options[i]" size="sm" />
               </div>
-              <KButton size="sm" text :disabled="i === 0" title="上移" @click="moveMode(i, -1)">
+              <IconButton :disabled="i === 0" title="上移" @click="moveMode(i, -1)">
                 <ArrowUp class="size-3.5" />
-              </KButton>
-              <KButton
-                size="sm"
-                text
+              </IconButton>
+              <IconButton
                 :disabled="i === form.mode_options.length - 1"
                 title="下移"
                 @click="moveMode(i, 1)"
               >
                 <ArrowDown class="size-3.5" />
-              </KButton>
-              <KButton size="sm" text title="删除" @click="removeMode(i)">
-                <Trash2 class="size-3.5 text-red-500" />
-              </KButton>
+              </IconButton>
+              <IconButton title="删除" danger @click="removeMode(i)">
+                <Trash2 class="size-3.5" />
+              </IconButton>
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
@@ -218,9 +217,9 @@ async function backupNow() {
               <div class="w-32">
                 <KInputNumber v-model="b.high_mhz" size="sm" :min="0" :step="0.001" :show-button="false" />
               </div>
-              <KButton size="sm" text title="删除" @click="removeBand(i)">
-                <Trash2 class="size-3.5 text-red-500" />
-              </KButton>
+              <IconButton title="删除" danger @click="removeBand(i)">
+                <Trash2 class="size-3.5" />
+              </IconButton>
             </div>
           </div>
           <div class="mt-3">
