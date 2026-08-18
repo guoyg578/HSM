@@ -65,6 +65,10 @@ function localToUtcIso(value: string): string {
   return new Date(value.replace(' ', 'T')).toISOString().slice(0, 19)
 }
 
+// 打开表单时的原值；保存时据此判断用户是否改过网格/距离
+let originalDistance: number | null = null
+let originalGrid = ''
+
 watch(
   () => props.open,
   async (open) => {
@@ -94,6 +98,8 @@ watch(
       audio_path: q?.audio_path ?? '',
       my_power: q ? q.my_power || null : null,
     }
+    originalDistance = model.value.distance_km
+    originalGrid = model.value.grid
   },
 )
 
@@ -123,6 +129,17 @@ const previewDistance = computed(() => {
   const myGrid = props.qso ? props.qso.my_grid : defaults.value?.my_grid
   if (!myGrid || !model.value.grid) return null
   return gridDistanceKm(myGrid, model.value.grid)
+})
+
+// 距离框将被自动计算覆盖的两种情况：留空；或编辑时改了网格但没动距离
+const willAutoCalc = computed(() => {
+  if (previewDistance.value === null) return false
+  if (model.value.distance_km === null) return true
+  return (
+    !!props.qso &&
+    model.value.grid.trim() !== originalGrid &&
+    model.value.distance_km === originalDistance
+  )
 })
 
 function uploadFactory(kind: 'qsl' | 'audio') {
@@ -162,7 +179,6 @@ async function save() {
       rst_rcvd: model.value.rst_rcvd,
       qth: model.value.qth,
       grid: model.value.grid.trim(),
-      distance_km: model.value.distance_km,
       their_equipment: model.value.their_equipment,
       their_antenna: model.value.their_antenna,
       their_power: model.value.their_power,
@@ -171,6 +187,11 @@ async function save() {
       audio_path: model.value.audio_path,
     }
     if (model.value.my_power) payload.my_power = model.value.my_power
+    // 编辑时若改了网格但没动距离，则不提交距离，由后端按新网格重算；其余情况原样提交
+    const gridChanged = props.qso && model.value.grid.trim() !== originalGrid
+    if (!(gridChanged && model.value.distance_km === originalDistance)) {
+      payload.distance_km = model.value.distance_km
+    }
     if (props.qso) {
       await api.updateQso(props.qso.id, payload)
       KMessage.success('QSO 已更新')
@@ -273,7 +294,7 @@ async function save() {
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">
             距离（公里）
-            <template v-if="previewDistance !== null && model.distance_km === null">
+            <template v-if="willAutoCalc">
               —— 将按网格自动计算：约 {{ previewDistance }} km
             </template>
           </span>
