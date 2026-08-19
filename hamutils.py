@@ -55,6 +55,21 @@ def grid_to_latlon(grid: str) -> tuple[float, float]:
     return lat, lon
 
 
+def latlon_to_grid(lat: float, lon: float, precision: int = 4) -> str:
+    """(纬度, 经度) → Maidenhead 网格。precision 取 4 或 6。"""
+    if not -90 <= lat <= 90 or not -180 <= lon <= 180:
+        raise ValueError(f"经纬度超出范围: {lat}, {lon}")
+    # 落在极点/日界线上时收敛到最后一格，避免字段索引越界
+    lon = min(lon + 180.0, 359.999999)
+    lat = min(lat + 90.0, 179.999999)
+
+    grid = chr(ord("A") + int(lon // 20)) + chr(ord("A") + int(lat // 10))
+    grid += str(int(lon % 20 // 2)) + str(int(lat % 10 // 1))
+    if precision >= 6:
+        grid += chr(ord("a") + int(lon % 2 * 12)) + chr(ord("a") + int(lat % 1 * 24))
+    return grid
+
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     r = 6371.0
     p1, p2 = math.radians(lat1), math.radians(lat2)

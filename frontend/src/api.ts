@@ -74,6 +74,12 @@ export const api = {
     request<QSO>(`/api/qsos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQso: (id: number) => request<void>(`/api/qsos/${id}`, { method: 'DELETE' }),
 
+  // ---- 地理 ----
+  qthGrid: (qth: string) =>
+    request<{ grid: string; matched: string; found: boolean }>(
+      `/api/geo/qth-grid${qs({ qth })}`,
+    ),
+
   // ---- 统计 ----
   stats: (stationId?: number) => request<Stats>(`/api/stats${qs({ station_id: stationId })}`),
 

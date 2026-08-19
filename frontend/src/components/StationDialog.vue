@@ -25,10 +25,35 @@ const model = ref({
 })
 const saving = ref(false)
 
+// 按 QTH 估算的网格建议。本台网格影响全部 QSO 的距离，故只提示不自动填，
+// 由用户决定是否采用（自己台站的位置通常能填到更精确的 6 位）。
+const qthGuess = ref<{ grid: string; matched: string } | null>(null)
+let qthTimer: ReturnType<typeof setTimeout> | undefined
+
+function refreshQthGuess() {
+  clearTimeout(qthTimer)
+  const qth = model.value.qth.trim()
+  if (!qth) {
+    qthGuess.value = null
+    return
+  }
+  qthTimer = setTimeout(async () => {
+    try {
+      const r = await api.qthGrid(qth)
+      qthGuess.value = r.found ? { grid: r.grid, matched: r.matched } : null
+    } catch {
+      qthGuess.value = null
+    }
+  }, 300)
+}
+
+watch(() => model.value.qth, refreshQthGuess)
+
 watch(
   () => props.open,
   (open) => {
     if (!open) return
+    qthGuess.value = null
     const s = props.station
     model.value = {
       name: s?.name ?? '',
@@ -39,6 +64,7 @@ watch(
       itu_zone: s?.itu_zone ?? '',
       remark: s?.remark ?? '',
     }
+    refreshQthGuess()
   },
 )
 
@@ -89,6 +115,17 @@ async function save() {
         </KFormField>
         <KFormField name="grid" label="Grid 网格定位">
           <KInput v-model="model.grid" placeholder="如：OM81 / OM81mt" />
+          <div v-if="qthGuess && qthGuess.grid !== model.grid.trim()" class="mt-1 text-xs text-gray-400">
+            按「{{ qthGuess.matched }}」估算为
+            <button
+              type="button"
+              class="cursor-pointer font-medium text-blue-600 underline-offset-2 hover:underline"
+              @click="model.grid = qthGuess!.grid"
+            >
+              {{ qthGuess.grid }}
+            </button>
+            ，点击填入（建议再补足 6 位）
+          </div>
         </KFormField>
         <KFormField name="cq_zone" label="CQ Zone（可选）">
           <KInput v-model="model.cq_zone" placeholder="如：24" />

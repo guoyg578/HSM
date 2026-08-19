@@ -100,6 +100,8 @@ watch(
     }
     originalDistance = model.value.distance_km
     originalGrid = model.value.grid
+    qthGuess.value = null
+    refreshQthGuess()
   },
 )
 
@@ -125,10 +127,36 @@ const powerOptions = computed(() =>
   })),
 )
 
+// 按 QTH 地名估算的网格（后端离线查表），仅在网格留空时作为兜底
+const qthGuess = ref<{ grid: string; matched: string } | null>(null)
+let qthTimer: ReturnType<typeof setTimeout> | undefined
+
+function refreshQthGuess() {
+  clearTimeout(qthTimer)
+  const qth = model.value.qth.trim()
+  if (!qth) {
+    qthGuess.value = null
+    return
+  }
+  qthTimer = setTimeout(async () => {
+    try {
+      const r = await api.qthGrid(qth)
+      qthGuess.value = r.found ? { grid: r.grid, matched: r.matched } : null
+    } catch {
+      qthGuess.value = null
+    }
+  }, 300)
+}
+
+watch(() => model.value.qth, refreshQthGuess)
+
+// 网格留空时后端会按 QTH 估算，预览沿用同一兜底值才能与保存结果一致
+const effectiveGrid = computed(() => model.value.grid.trim() || qthGuess.value?.grid || '')
+
 const previewDistance = computed(() => {
   const myGrid = props.qso ? props.qso.my_grid : defaults.value?.my_grid
-  if (!myGrid || !model.value.grid) return null
-  return gridDistanceKm(myGrid, model.value.grid)
+  if (!myGrid || !effectiveGrid.value) return null
+  return gridDistanceKm(myGrid, effectiveGrid.value)
 })
 
 // 距离框将被自动计算覆盖的两种情况：留空；或编辑时改了网格但没动距离
@@ -288,8 +316,13 @@ async function save() {
           <KInput v-model="model.rst_rcvd" placeholder="59" />
         </label>
         <label class="block">
-          <span class="mb-1 block text-xs text-gray-500">对方 Grid</span>
-          <KInput v-model="model.grid" placeholder="如：PM01" />
+          <span class="mb-1 block text-xs text-gray-500">
+            对方 Grid
+            <template v-if="!model.grid.trim() && qthGuess">
+              —— 将按「{{ qthGuess.matched }}」自动填 {{ qthGuess.grid }}
+            </template>
+          </span>
+          <KInput v-model="model.grid" placeholder="留空则按 QTH 估算" />
         </label>
         <label class="block">
           <span class="mb-1 block text-xs text-gray-500">

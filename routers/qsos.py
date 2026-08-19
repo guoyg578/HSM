@@ -9,6 +9,7 @@ import schemas
 from app_settings import get_bands
 from database import get_db
 from hamutils import freq_to_band, grid_distance_km
+from qthgrid import qth_to_grid
 from routers.stations import build_defaults
 
 router = APIRouter(prefix="/api/qsos", tags=["qsos"])
@@ -133,7 +134,16 @@ def update_qso(qso_id: int, data: schemas.QSOUpdate, db: Session = Depends(get_d
     # 频率变了但未显式给波段 → 重算；网格变了但未显式给距离 → 重算
     if "freq_mhz" in changes and "band" not in changes:
         qso.band = freq_to_band(qso.freq_mhz, get_bands(db))
-    if ("grid" in changes or "my_grid" in changes) and "distance_km" not in changes:
+    # QTH 变了而网格仍为空 → 按地名估算，视同网格变化以触发距离重算
+    grid_filled = False
+    if "qth" in changes and not qso.grid:
+        hit = qth_to_grid(qso.qth)
+        if hit:
+            qso.grid = hit[0]
+            grid_filled = True
+    if (
+        "grid" in changes or "my_grid" in changes or grid_filled
+    ) and "distance_km" not in changes:
         qso.distance_km = grid_distance_km(qso.my_grid, qso.grid)
     db.commit()
     return qso
@@ -150,9 +160,14 @@ def delete_qso(qso_id: int, db: Session = Depends(get_db)):
 
 
 def _autofill(fields: dict, bands: list[tuple[float, float, str]] | None = None) -> None:
-    """波段与距离的自动推导（不覆盖显式传入值）。"""
+    """波段、网格与距离的自动推导（不覆盖显式传入值）。"""
     if not fields.get("band"):
         fields["band"] = freq_to_band(fields.get("freq_mhz"), bands)
+    # 只填了 QTH 没填网格时按地名估算 4 位网格，让距离能算出来
+    if not fields.get("grid"):
+        hit = qth_to_grid(fields.get("qth") or "")
+        if hit:
+            fields["grid"] = hit[0]
     if fields.get("distance_km") is None:
         fields["distance_km"] = grid_distance_km(
             fields.get("my_grid") or "", fields.get("grid") or ""

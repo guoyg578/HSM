@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { KInput, KInputNumber, KTag } from '@guoyg578/k-ui'
-import { Calculator, Compass, Ruler, Waves } from '@lucide/vue'
+import { Calculator, Compass, MapPin, Ruler, Waves } from '@lucide/vue'
+import { api } from '../api'
 import { appSettings } from '../settings'
 import { gridDistanceKm, gridToLatLon, isValidGrid } from '../utils'
 
@@ -9,6 +10,25 @@ import { gridDistanceKm, gridToLatLon, isValidGrid } from '../utils'
 const gridA = ref('')
 const gridB = ref('')
 const distance = computed(() => gridDistanceKm(gridA.value, gridB.value))
+
+// ---- QTH 地名 → 网格 ----
+const qthQuery = ref('')
+const qthResult = ref<{ grid: string; matched: string; found: boolean } | null>(null)
+let qthTimer: ReturnType<typeof setTimeout> | undefined
+watch(qthQuery, (v) => {
+  clearTimeout(qthTimer)
+  if (!v.trim()) {
+    qthResult.value = null
+    return
+  }
+  qthTimer = setTimeout(async () => {
+    try {
+      qthResult.value = await api.qthGrid(v)
+    } catch {
+      qthResult.value = null
+    }
+  }, 300)
+})
 
 // ---- 网格 → 经纬度 ----
 const gridQuery = ref('')
@@ -67,6 +87,28 @@ const RST_S = ['1 微弱', '3 弱', '5 尚好', '7 中强', '9 极强']
             <span class="ml-1 text-sm text-gray-500">km（大圆距离）</span>
           </template>
           <span v-else class="text-sm text-gray-400">输入两个有效的 Maidenhead 网格</span>
+        </div>
+      </section>
+
+      <!-- QTH → 网格 -->
+      <section class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div class="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <span class="inline-flex rounded-lg bg-amber-50 p-1.5"><MapPin class="size-4 text-amber-600" /></span>
+          QTH 地名 → 网格
+        </div>
+        <label class="block">
+          <span class="mb-1 block text-xs text-gray-500">地名（支持省 / 市，中英文均可）</span>
+          <KInput v-model="qthQuery" placeholder="如 安徽合肥 / 北京 / Tokyo" />
+        </label>
+        <div class="mt-4 rounded-xl bg-gray-50 p-3 text-center">
+          <template v-if="qthResult?.found">
+            <span class="text-2xl font-bold tracking-wide">{{ qthResult.grid }}</span>
+            <div class="mt-0.5 text-xs text-gray-400">
+              按「{{ qthResult.matched }}」估算的 4 位网格
+            </div>
+          </template>
+          <span v-else-if="qthQuery.trim()" class="text-sm text-gray-400">未收录该地名</span>
+          <span v-else class="text-sm text-gray-400">输入地名估算网格</span>
         </div>
       </section>
 

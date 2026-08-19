@@ -222,3 +222,56 @@ def test_settings():
     defaults = client.get("/api/settings/defaults").json()
     assert client.put("/api/settings", json=defaults).status_code == 200
     assert client.get("/api/settings").json()["default_mode"] == "FM"
+
+
+def test_qth_to_grid_autofill():
+    """只填 QTH 不填网格时，按地名估算网格并算出距离。"""
+    sid = _create_station()  # 本台 安徽合肥 OM81
+
+    # 只给 QTH：网格与距离都应被推导出来
+    qso = client.post(
+        "/api/qsos", json={"station_id": sid, "call": "BD1QTH", "qth": "北京"}
+    ).json()
+    assert qso["grid"] == "OM89"
+    assert qso["distance_km"] and 800 < qso["distance_km"] < 1000
+
+    # 显式给的网格不被地名覆盖（QTH 与网格冲突时以网格为准）
+    qso = client.post(
+        "/api/qsos",
+        json={"station_id": sid, "call": "BD2QTH", "qth": "北京", "grid": "PM95"},
+    ).json()
+    assert qso["grid"] == "PM95"
+
+    # 识别不了的地名不产生网格，也不该报错
+    qso = client.post(
+        "/api/qsos", json={"station_id": sid, "call": "BD3QTH", "qth": "某个山头"}
+    ).json()
+    assert qso["grid"] == ""
+    assert qso["distance_km"] is None
+
+    # 编辑时补 QTH：网格为空才推导
+    qid = qso["id"]
+    updated = client.put(f"/api/qsos/{qid}", json={"qth": "上海"}).json()
+    assert updated["grid"] == "PM01"
+    assert updated["distance_km"] and 300 < updated["distance_km"] < 600
+
+    # 已有网格时改 QTH 不会被覆盖
+    updated = client.put(f"/api/qsos/{qid}", json={"qth": "广州"}).json()
+    assert updated["grid"] == "PM01"
+
+
+def test_geo_qth_grid_endpoint():
+    """QTH 预览接口：命中/未命中/空值。"""
+    hit = client.get("/api/geo/qth-grid", params={"qth": "安徽省合肥市"}).json()
+    assert hit["found"] and hit["grid"] == "OM81" and hit["matched"] == "合肥"
+
+    # 城市优先于省份，长名优先于其子串
+    assert client.get("/api/geo/qth-grid", params={"qth": "马鞍山"}).json()["grid"] == "OM91"
+    # 省份兜底到省会
+    assert client.get("/api/geo/qth-grid", params={"qth": "安徽"}).json()["grid"] == "OM81"
+    # 英文地名（ADIF 导入常见）
+    assert client.get("/api/geo/qth-grid", params={"qth": "Tokyo"}).json()["grid"] == "PM95"
+
+    miss = client.get("/api/geo/qth-grid", params={"qth": "火星基地"}).json()
+    assert not miss["found"] and miss["grid"] == ""
+    assert not client.get("/api/geo/qth-grid", params={"qth": ""}).json()["found"]
