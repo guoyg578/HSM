@@ -252,7 +252,7 @@ async function deleteStation() {
       <!-- 工具栏：搜索 + 模式切换 + 列设置 + 次要操作 -->
       <div class="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
         <div class="w-full sm:w-72">
-          <KSearchBar v-model="search" placeholder="搜索呼号 / QTH / 备注"/>
+          <KSearchBar v-model="search" size="sm" placeholder="搜索呼号 / QTH / 备注" />
         </div>
         <KRadioGroup v-model="viewMode" button size="sm">
           <KRadio value="table">

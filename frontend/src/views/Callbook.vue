@@ -91,7 +91,7 @@ const entries = computed<Entry[]>(() => {
             （基于最近 500 条记录）</template>
         </p>
       </div>
-      <KSearchBar v-model="search" placeholder="搜索呼号 / QTH" />
+      <KSearchBar v-model="search" size="md" placeholder="搜索呼号 / QTH" />
     </div>
 
     <KEmpty v-if="!entries.length" title="暂无通联对象" description="记录第一条 QSO 后这里会自动汇总" />

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@guoyg578/k-ui':
-        specifier: ^0.1.10
-        version: 0.1.10(@lucide/vue@1.28.0(vue@3.5.40(typescript@6.0.3)))(@vuepic/vue-datepicker@13.0.0(vue@3.5.40(typescript@6.0.3)))(date-fns@4.4.0)(reka-ui@2.10.1(vue@3.5.40(typescript@6.0.3)))(vue@3.5.40(typescript@6.0.3))
+        specifier: ^0.1.11
+        version: 0.1.11(@lucide/vue@1.28.0(vue@3.5.40(typescript@6.0.3)))(@vuepic/vue-datepicker@13.0.0(vue@3.5.40(typescript@6.0.3)))(date-fns@4.4.0)(reka-ui@2.10.1(vue@3.5.40(typescript@6.0.3)))(vue@3.5.40(typescript@6.0.3))
       '@lucide/vue':
         specifier: ^1.28.0
         version: 1.28.0(vue@3.5.40(typescript@6.0.3))
@@ -116,8 +116,8 @@ packages:
   '@floating-ui/vue@1.1.11':
     resolution: {integrity: sha512-HzHKCNVxnGS35r9fCHBc3+uCnjw9IWIlCPL683cGgM9Kgj2BiAl8x1mS7vtvP6F9S/e/q4O6MApwSHj8hNLGfw==}
 
-  '@guoyg578/k-ui@0.1.10':
-    resolution: {integrity: sha512-QXPuxfmSHp4AQg6JbJl7F18GGnop9C82s7tvk/Z/Jx+vjoFZsP4cihl/v8otaw3p5lm9Td1pb4NgJvHWxm9BaQ==}
+  '@guoyg578/k-ui@0.1.11':
+    resolution: {integrity: sha512-+ndEp3VgdVHykXxdEfOovBRYpI2oYI/TlmGi6eGXHBWUEmbr1Pnazm2CCBW7j0AGNEKcrYlKgmJAYygNdRNwog==}
     peerDependencies:
       '@lucide/vue': ^1.0.0
       '@vuepic/vue-datepicker': ^13.0.0
@@ -1008,7 +1008,7 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@guoyg578/k-ui@0.1.10(@lucide/vue@1.28.0(vue@3.5.40(typescript@6.0.3)))(@vuepic/vue-datepicker@13.0.0(vue@3.5.40(typescript@6.0.3)))(date-fns@4.4.0)(reka-ui@2.10.1(vue@3.5.40(typescript@6.0.3)))(vue@3.5.40(typescript@6.0.3))':
+  '@guoyg578/k-ui@0.1.11(@lucide/vue@1.28.0(vue@3.5.40(typescript@6.0.3)))(@vuepic/vue-datepicker@13.0.0(vue@3.5.40(typescript@6.0.3)))(date-fns@4.4.0)(reka-ui@2.10.1(vue@3.5.40(typescript@6.0.3)))(vue@3.5.40(typescript@6.0.3))':
     dependencies:
       '@lucide/vue': 1.28.0(vue@3.5.40(typescript@6.0.3))
       reka-ui: 2.10.1(vue@3.5.40(typescript@6.0.3))

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@guoyg578/k-ui": "^0.1.10",
+    "@guoyg578/k-ui": "^0.1.11",
     "@lucide/vue": "^1.28.0",
     "@vuepic/vue-datepicker": "^13.0.0",
     "date-fns": "^4.4.0",
