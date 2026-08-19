@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, h, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { KDrawer, KMenu } from '@guoyg578/k-ui'
 import type { MenuOption } from '@guoyg578/k-ui'
@@ -65,14 +65,22 @@ const menuOptions = computed<MenuOption[]>(() => [
   {
     key: 'stations',
     label: '我的电台',
-    children: stations.value.map((s) => ({
-      key: `st:${s.id}`,
-      label: s.name,
-      icon: RadioTower,
-    })),
+    children: [
+      ...stations.value.map((s) => ({
+        key: `st:${s.id}`,
+        label: s.name,
+        icon: RadioTower,
+      })),
+      // 分隔线 + 蓝色，标明这是操作项而非某个电台
+      { key: 'div-new-station', type: 'divider' },
+      {
+        key: 'new-station',
+        label: () => h('span', { class: 'text-blue-600' }, '新建电台'),
+        icon: () => h(Plus, { class: 'size-4 text-blue-600' }),
+      },
+    ],
   },
   { key: 'div2', type: 'divider' },
-  { key: 'new-station', label: '新建电台', icon: Plus },
   { key: 'admin', label: '后台管理', icon: SettingsIcon },
 ])
 

@@ -10,4 +10,4 @@ resources:
 # 升级版本时只改这里的 newTag，再 kubectl apply -k k8s/
 images:
   - name: ham-station-manager
-    newTag: "1.5"
+    newTag: "1.6"
