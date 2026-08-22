@@ -121,7 +121,7 @@ onMounted(() => {
   fetchQsos()
 })
 
-// ---- 时间线卡片头图渐变（无 QSL 图片时按 id 轮换） ----
+// ---- 时间线卡片左侧色条渐变（无 QSL 图片时按 id 轮换） ----
 const GRADIENTS = [
   'from-blue-500 to-indigo-600',
   'from-emerald-500 to-sky-500',
@@ -363,10 +363,9 @@ async function deleteStation() {
             :key="q.id"
             class="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-lg"
           >
-            <!-- 头图：有 QSL 用图片，否则渐变底 -->
-            <div class="relative h-24 bg-gradient-to-br" :class="coverGradient(q)">
+            <!-- 有 QSL 照片时用照片头图，文字压在图上 -->
+            <div v-if="q.qsl_path" class="relative h-24">
               <KImage
-                v-if="q.qsl_path"
                 :src="`/files/${q.qsl_path}`"
                 alt="QSL"
                 width="100%"
@@ -375,23 +374,27 @@ async function deleteStation() {
                 preview
                 class="absolute inset-0"
               />
-              <!-- 仅照片头图需要暗色压边保证文字可读；渐变底本身对比度足够 -->
-              <div
-                v-if="q.qsl_path"
-                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
-              />
-              <div
-                class="pointer-events-none absolute bottom-2 left-4 text-lg font-extrabold tracking-wide text-white"
-                :class="q.qsl_path ? 'drop-shadow' : ''"
-              >
+              <!-- 暗色压边保证文字可读 -->
+              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div class="pointer-events-none absolute bottom-2 left-4 text-lg font-extrabold tracking-wide text-white drop-shadow">
                 {{ q.call }}
               </div>
               <div class="pointer-events-none absolute right-3 top-2 text-[11px] font-medium text-white/85">
                 {{ fmtDate(q.datetime_utc) }} {{ fmtTime(q.datetime_utc) }}
               </div>
             </div>
+            <!-- 无照片时用轻量文字头：细色条保留识别度，避免大色块头重脚轻 -->
+            <div v-else class="flex items-center justify-between gap-2 px-4 pt-3.5">
+              <div class="flex min-w-0 items-center gap-2.5">
+                <span class="h-5 w-1.5 shrink-0 rounded-full bg-gradient-to-b" :class="coverGradient(q)" />
+                <span class="truncate text-lg font-extrabold tracking-wide text-gray-800">{{ q.call }}</span>
+              </div>
+              <span class="shrink-0 text-[11px] font-medium text-gray-400">
+                {{ fmtDate(q.datetime_utc) }} {{ fmtTime(q.datetime_utc) }}
+              </span>
+            </div>
 
-            <div class="p-4">
+            <div class="p-4" :class="q.qsl_path ? '' : 'pt-3'">
               <div class="mb-3 flex flex-wrap items-center gap-1.5">
                 <KTag v-if="q.band" size="sm">{{ q.band }}</KTag>
                 <KTag v-if="q.mode" size="sm" type="info">{{ q.mode }}</KTag>

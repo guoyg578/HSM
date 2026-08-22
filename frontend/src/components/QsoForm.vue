@@ -15,6 +15,7 @@ import type { UploadCustomRequestOptions } from '@guoyg578/k-ui'
 import type { QSO, QSODefaults } from '../types'
 import { api } from '../api'
 import { appSettings, modeOptions } from '../settings'
+import { refreshStations, stations } from '../store'
 import { gridDistanceKm } from '../utils'
 
 const props = defineProps<{
@@ -30,6 +31,13 @@ const emit = defineEmits<{
 
 const defaults = ref<QSODefaults | null>(null)
 const saving = ref(false)
+
+// 所属电台：编辑时可切换，保存后由后端按新电台重新继承本台快照
+const stationId = ref(props.stationId)
+const stationChanged = computed(() => !!props.qso && stationId.value !== props.qso.station_id)
+const stationOptions = computed(() =>
+  stations.value.map((s) => ({ value: s.id, label: `${s.name}（${s.callsign}）` })),
+)
 
 const model = ref({
   datetime: '',
@@ -69,16 +77,34 @@ function localToUtcIso(value: string): string {
 let originalDistance: number | null = null
 let originalGrid = ''
 
+async function loadDefaults() {
+  defaults.value = null
+  try {
+    defaults.value = await api.qsoDefaults(stationId.value)
+  } catch (e) {
+    KMessage.error(`加载本台信息失败: ${(e as Error).message}`)
+  }
+}
+
+// 编辑中切换电台 → 重新拉取新电台的本台信息；功率是电台相关的选择，一并重置
+watch(stationId, () => {
+  if (!props.open) return
+  loadDefaults()
+  if (props.qso) {
+    model.value.my_power =
+      stationId.value === props.qso.station_id ? props.qso.my_power || null : null
+  }
+})
+
 watch(
   () => props.open,
   async (open) => {
     if (!open) return
-    defaults.value = null
-    try {
-      defaults.value = await api.qsoDefaults(props.stationId)
-    } catch (e) {
-      KMessage.error(`加载本台信息失败: ${(e as Error).message}`)
-    }
+    if (!stations.value.length) refreshStations()
+    const target = props.qso?.station_id ?? props.stationId
+    // 目标电台没变时 watcher 不会触发，需手动拉取
+    if (stationId.value === target) loadDefaults()
+    else stationId.value = target
     const q = props.qso
     model.value = {
       datetime: q ? utcIsoToLocal(q.datetime_utc) : toLocalInput(new Date()),
@@ -106,7 +132,8 @@ watch(
 )
 
 const myInfo = computed(() => {
-  if (props.qso) {
+  // 编辑时展示记录里的快照；但切换了电台后展示新电台将继承的信息
+  if (props.qso && !stationChanged.value) {
     const q = props.qso
     return {
       my_callsign: q.my_callsign,
@@ -154,18 +181,19 @@ watch(() => model.value.qth, refreshQthGuess)
 const effectiveGrid = computed(() => model.value.grid.trim() || qthGuess.value?.grid || '')
 
 const previewDistance = computed(() => {
-  const myGrid = props.qso ? props.qso.my_grid : defaults.value?.my_grid
+  const myGrid =
+    props.qso && !stationChanged.value ? props.qso.my_grid : defaults.value?.my_grid
   if (!myGrid || !effectiveGrid.value) return null
   return gridDistanceKm(myGrid, effectiveGrid.value)
 })
 
-// 距离框将被自动计算覆盖的两种情况：留空；或编辑时改了网格但没动距离
+// 距离框将被自动计算覆盖的情况：留空；或编辑时改了网格/换了电台但没动距离
 const willAutoCalc = computed(() => {
   if (previewDistance.value === null) return false
   if (model.value.distance_km === null) return true
   return (
     !!props.qso &&
-    model.value.grid.trim() !== originalGrid &&
+    (model.value.grid.trim() !== originalGrid || stationChanged.value) &&
     model.value.distance_km === originalDistance
   )
 })
@@ -215,14 +243,21 @@ async function save() {
       audio_path: model.value.audio_path,
     }
     if (model.value.my_power) payload.my_power = model.value.my_power
-    // 编辑时若改了网格但没动距离，则不提交距离，由后端按新网格重算；其余情况原样提交
-    const gridChanged = props.qso && model.value.grid.trim() !== originalGrid
-    if (!(gridChanged && model.value.distance_km === originalDistance)) {
+    // 编辑时若改了网格/换了电台但没动距离，则不提交距离，由后端按新网格重算；其余情况原样提交
+    const needRecalc =
+      props.qso && (model.value.grid.trim() !== originalGrid || stationChanged.value)
+    if (!(needRecalc && model.value.distance_km === originalDistance)) {
       payload.distance_km = model.value.distance_km
     }
     if (props.qso) {
+      if (stationChanged.value) payload.station_id = stationId.value
       await api.updateQso(props.qso.id, payload)
-      KMessage.success('QSO 已更新')
+      if (stationChanged.value) {
+        const name = stations.value.find((s) => s.id === stationId.value)?.name
+        KMessage.success(name ? `QSO 已移至「${name}」` : 'QSO 已更新')
+      } else {
+        KMessage.success('QSO 已更新')
+      }
     } else {
       await api.createQso({ ...payload, station_id: props.stationId })
       KMessage.success('QSO 已保存')
@@ -245,7 +280,22 @@ async function save() {
     width="min(640px, 100vw)"
     @update:open="emit('update:open', $event)"
   >
+    <template #header-extra>
+      <div class="flex items-center gap-2">
+        <KButton @click="emit('update:open', false)">取消</KButton>
+        <KButton type="primary" :loading="saving" @click="save">保存</KButton>
+      </div>
+    </template>
     <div class="space-y-4 pb-4">
+      <!-- 所属电台（编辑时可切换） -->
+      <label v-if="qso" class="block">
+        <span class="mb-1 block text-xs text-gray-500">
+          所属电台
+          <template v-if="stationChanged">—— 切换后本台信息将按新电台重新继承</template>
+        </span>
+        <KSelect v-model="stationId" :options="stationOptions" />
+      </label>
+
       <!-- 本台信息（自动继承） -->
       <div class="rounded-lg bg-blue-50 p-3 text-sm">
         <div class="mb-1 text-xs font-semibold text-blue-500">本台信息（自动继承）</div>
@@ -257,16 +307,18 @@ async function save() {
           <div>Grid：{{ myInfo.my_grid || '—' }}</div>
           <div>功率：{{ model.my_power || myInfo.my_power || '—' }}</div>
         </div>
-        <div v-if="!qso && powerOptions.length > 1" class="mt-2">
-          <KSelect
-            v-model="model.my_power"
-            :options="powerOptions"
-            placeholder="选择本次通联使用的功率"
-            size="sm"
-            clearable
-          />
-        </div>
       </div>
+
+      <!-- 本次通联使用的功率（电台配置多档时可选） -->
+      <label v-if="(!qso || stationChanged) && powerOptions.length > 1" class="block">
+        <span class="mb-1 block text-xs text-gray-500">本次通联使用的功率</span>
+        <KSelect
+          v-model="model.my_power"
+          :options="powerOptions"
+          placeholder="留空则继承电台默认功率"
+          clearable
+        />
+      </label>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
@@ -375,10 +427,6 @@ async function save() {
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 border-t border-gray-100 pt-4">
-        <KButton @click="emit('update:open', false)">取消</KButton>
-        <KButton type="primary" :loading="saving" @click="save">保存</KButton>
-      </div>
     </div>
   </KDrawer>
 </template>

@@ -260,6 +260,49 @@ def test_qth_to_grid_autofill():
     assert updated["grid"] == "PM01"
 
 
+def test_switch_qso_station():
+    """QSO 切换所属电台：my_* 快照按新电台重新继承，距离重算。"""
+    sid = _create_station()  # 合肥 OM81
+    sid2 = client.post(
+        "/api/stations",
+        json={"name": "移动台", "callsign": "BG5MOB", "qth": "北京", "grid": "OM89"},
+    ).json()["id"]
+
+    qso = client.post(
+        "/api/qsos", json={"station_id": sid, "call": "BD5SWX", "grid": "PM01"}
+    ).json()
+    assert qso["my_callsign"] == "BG5TEST"
+    old_distance = qso["distance_km"]
+
+    moved = client.put(f"/api/qsos/{qso['id']}", json={"station_id": sid2}).json()
+    assert moved["station_id"] == sid2
+    assert moved["my_callsign"] == "BG5MOB"
+    assert moved["my_grid"] == "OM89"
+    # 新电台没配设备/天线，快照随之清空
+    assert moved["my_equipment"] == ""
+    # 本台网格变了 → 距离按新网格重算
+    assert moved["distance_km"] and moved["distance_km"] != old_distance
+
+    # 目标电台的列表能查到，原电台查不到
+    calls = [
+        x["call"]
+        for x in client.get("/api/qsos", params={"station_id": sid2}).json()["items"]
+    ]
+    assert "BD5SWX" in calls
+    calls = [
+        x["call"]
+        for x in client.get("/api/qsos", params={"station_id": sid}).json()["items"]
+    ]
+    assert "BD5SWX" not in calls
+
+    # 切到不存在的电台 → 404，记录不受影响
+    assert (
+        client.put(f"/api/qsos/{qso['id']}", json={"station_id": 99999}).status_code
+        == 404
+    )
+    assert client.get(f"/api/qsos/{qso['id']}").json()["station_id"] == sid2
+
+
 def test_geo_qth_grid_endpoint():
     """QTH 预览接口：命中/未命中/空值。"""
     hit = client.get("/api/geo/qth-grid", params={"qth": "安徽省合肥市"}).json()

@@ -128,6 +128,24 @@ def update_qso(qso_id: int, data: schemas.QSOUpdate, db: Session = Depends(get_d
     if not qso:
         raise HTTPException(404, "QSO 不存在")
     changes = data.model_dump(exclude_unset=True)
+
+    # 切换所属电台：未显式传入的 my_* 快照按新电台配置重新继承
+    if "station_id" in changes and changes["station_id"] != qso.station_id:
+        station = db.get(models.Station, changes["station_id"])
+        if not station:
+            raise HTTPException(404, "电台不存在")
+        defaults = build_defaults(station)
+        for key in (
+            "my_callsign",
+            "my_qth",
+            "my_grid",
+            "my_equipment",
+            "my_antenna",
+            "my_power",
+        ):
+            if key not in changes:
+                changes[key] = getattr(defaults, key)
+
     for key, value in changes.items():
         setattr(qso, key, value)
 

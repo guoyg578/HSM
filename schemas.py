@@ -108,6 +108,7 @@ class QSOCreate(QSOBase):
 
 
 class QSOUpdate(BaseModel):
+    station_id: int | None = None
     datetime_utc: datetime | None = None
     call: str | None = None
     freq_mhz: float | None = None
