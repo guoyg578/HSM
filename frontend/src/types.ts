@@ -113,6 +113,7 @@ export interface AppSettings {
   mode_options: string[]
   default_mode: string
   default_rst: string
+  qso_columns: string[]
   bands: BandRange[]
   backup_interval_hours: number
   backup_keep: number

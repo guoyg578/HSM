@@ -29,6 +29,8 @@ DEFAULTS: dict = {
     ],
     "default_mode": "FM",
     "default_rst": "59",
+    # 电台日志表格默认显示的列（键名与前端 COLUMN_DEFS 对应）
+    "qso_columns": ["date", "time", "call", "freq", "mode", "rst", "qth"],
     "bands": [
         {"low_mhz": low, "high_mhz": high, "name": name}
         for low, high, name in DEFAULT_BANDS

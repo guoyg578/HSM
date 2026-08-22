@@ -25,7 +25,8 @@ type SortState = { columnKey: string; order: 'ascend' | 'descend' }
 import { FileDown, List, Map as MapIcon, PanelRight, Pencil, Plus, Settings, Table as TableIcon, Trash2 } from '@lucide/vue'
 import type { QSO, StationDetail } from '../types'
 import { api } from '../api'
-import { loadColumns, loadViewMode, saveColumns, saveLastStation, saveViewMode, type ViewMode } from '../prefs'
+import { COLUMN_DEFS, loadViewMode, saveLastStation, saveViewMode, type ViewMode } from '../prefs'
+import { appSettings, loadAppSettings } from '../settings'
 import { fmtDate, fmtFreq, fmtTime } from '../utils'
 import { refreshStations } from '../store'
 import IconButton from '../components/IconButton.vue'
@@ -60,7 +61,26 @@ async function onStationSaved() {
 
 // ---- 状态 ----
 const viewMode = ref<ViewMode>(loadViewMode())
-const visibleCols = ref<string[]>(loadColumns())
+// 显示列 = 后台配置的 qso_columns：这里改动直接写回服务端，与后台管理页同步
+const visibleCols = ref<string[]>([...appSettings.value.qso_columns])
+loadAppSettings().then(() => {
+  visibleCols.value = [...appSettings.value.qso_columns]
+})
+
+async function onColsChange(v: (string | number)[]) {
+  const cols = v.map(String)
+  if (!cols.length) {
+    KMessage.warning('至少保留一列')
+    visibleCols.value = [...appSettings.value.qso_columns]
+    return
+  }
+  try {
+    appSettings.value = await api.updateSettings({ qso_columns: cols })
+  } catch (e) {
+    KMessage.error(`保存显示列失败: ${(e as Error).message}`)
+    visibleCols.value = [...appSettings.value.qso_columns]
+  }
+}
 const search = ref('')
 const page = ref(1)
 const pageSize = ref(50)
@@ -79,8 +99,6 @@ watch(viewMode, (m) => {
   saveViewMode(m)
   fetchQsos()
 })
-watch(visibleCols, (c) => saveColumns(c))
-
 // ---- 数据加载 ----
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -132,27 +150,7 @@ function coverGradient(q: QSO): string {
   return GRADIENTS[q.id % GRADIENTS.length]!
 }
 
-// ---- 表格列 ----
-const COLUMN_DEFS: { key: string; label: string; always?: boolean }[] = [
-  { key: 'date', label: '日期' },
-  { key: 'time', label: '时间' },
-  { key: 'call', label: '呼号' },
-  { key: 'freq', label: '频率' },
-  { key: 'band', label: '波段' },
-  { key: 'mode', label: '模式' },
-  { key: 'rst', label: 'RST' },
-  { key: 'qth', label: '对方QTH' },
-  { key: 'grid', label: '网格' },
-  { key: 'distance', label: '距离(km)' },
-  { key: 'equipment', label: '我的设备' },
-  { key: 'antenna', label: '我的天线' },
-  { key: 'power', label: '我的功率' },
-  { key: 'their_equipment', label: '对方设备' },
-  { key: 'their_antenna', label: '对方天线' },
-  { key: 'their_power', label: '对方功率' },
-  { key: 'remark', label: '备注' },
-]
-
+// ---- 表格列（列定义见 prefs.ts，与后台「默认列」配置共用） ----
 const columns = computed<Column<QSO>[]>(() => {
   const cols: Column<QSO>[] = COLUMN_DEFS.filter((c) => visibleCols.value.includes(c.key)).map(
     (c) => ({
@@ -269,7 +267,12 @@ async function deleteStation() {
           <template #content>
             <div class="p-2">
               <div class="mb-2 text-xs font-semibold text-gray-400">显示列</div>
-              <KCheckboxGroup v-model="visibleCols" direction="vertical" size="sm">
+              <KCheckboxGroup
+                v-model="visibleCols"
+                direction="vertical"
+                size="sm"
+                @update:model-value="onColsChange"
+              >
                 <KCheckbox v-for="c in COLUMN_DEFS" :key="c.key" :value="c.key" :label="c.label" />
               </KCheckboxGroup>
             </div>

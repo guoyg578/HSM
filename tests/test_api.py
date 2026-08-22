@@ -260,6 +260,21 @@ def test_qth_to_grid_autofill():
     assert updated["grid"] == "PM01"
 
 
+def test_qso_columns_setting():
+    """表格默认列：可配置、拒绝空列表、恢复默认。"""
+    assert client.get("/api/settings").json()["qso_columns"]
+
+    resp = client.put("/api/settings", json={"qso_columns": ["date", "call"]})
+    assert resp.status_code == 200
+    assert resp.json()["qso_columns"] == ["date", "call"]
+
+    assert client.put("/api/settings", json={"qso_columns": []}).status_code == 422
+
+    defaults = client.get("/api/settings/defaults").json()
+    assert client.put("/api/settings", json=defaults).status_code == 200
+    assert client.get("/api/settings").json()["qso_columns"] == defaults["qso_columns"]
+
+
 def test_switch_qso_station():
     """QSO 切换所属电台：my_* 快照按新电台重新继承，距离重算。"""
     sid = _create_station()  # 合肥 OM81

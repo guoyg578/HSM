@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { KButton, KInput, KInputNumber, KMessage, KPopconfirm, KSelect } from '@guoyg578/k-ui'
+import { KButton, KCheckbox, KCheckboxGroup, KInput, KInputNumber, KMessage, KPopconfirm, KSelect } from '@guoyg578/k-ui'
 import { ArrowDown, ArrowUp, DatabaseBackup, Plus, Settings as SettingsIcon, Trash2 } from '@lucide/vue'
 import type { AppSettings } from '../types'
 import { api } from '../api'
 import IconButton from '../components/IconButton.vue'
+import { COLUMN_DEFS } from '../prefs'
 import { appSettings, loadAppSettings } from '../settings'
 
 const form = ref<AppSettings | null>(null)
@@ -61,6 +62,7 @@ function validate(f: AppSettings): string | null {
     if (!(b.low_mhz > 0) || !(b.high_mhz > b.low_mhz))
       return `波段「${b.name}」频率范围无效（需 0 < 下限 < 上限）`
   }
+  if (!f.qso_columns.length) return '表格默认列至少选择一列'
   if (!(f.backup_interval_hours >= 1)) return '备份间隔至少 1 小时'
   if (!(f.backup_keep >= 1)) return '至少保留 1 份备份'
   return null
@@ -191,6 +193,19 @@ async function backupNow() {
               <KInput v-model="form.default_rst" size="sm" placeholder="59" />
             </label>
           </div>
+        </section>
+
+        <!-- 表格默认列 -->
+        <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 class="text-sm font-semibold">QSO 表格显示列</h2>
+          <p class="mb-3 mt-0.5 text-xs text-gray-400">
+            电台日志表格显示的列，与日志页工具栏的「显示列」是同一份配置，两处修改互相同步。
+          </p>
+          <KCheckboxGroup v-model="form.qso_columns" size="sm">
+            <div class="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-5">
+              <KCheckbox v-for="c in COLUMN_DEFS" :key="c.key" :value="c.key" :label="c.label" />
+            </div>
+          </KCheckboxGroup>
         </section>
         </div>
 

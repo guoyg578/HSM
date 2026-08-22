@@ -7,6 +7,7 @@ const FALLBACK: AppSettings = {
   mode_options: ['FM', 'FMO', 'SSB', 'CW', 'AM', 'FT8', 'FT4', 'RTTY', 'DMR', 'C4FM', 'D-STAR', 'Digital'],
   default_mode: 'FM',
   default_rst: '59',
+  qso_columns: ['date', 'time', 'call', 'freq', 'mode', 'rst', 'qth'],
   bands: [],
   backup_interval_hours: 24,
   backup_keep: 7,
@@ -20,7 +21,8 @@ export function loadAppSettings(force = false): Promise<void> {
   if (!loadPromise || force) {
     loadPromise = api.getSettings().then(
       (s) => {
-        appSettings.value = s
+        // 与内置默认合并：后端版本较旧、响应缺少新增字段时仍有默认值可用
+        appSettings.value = { ...FALLBACK, ...s }
       },
       () => {
         /* 加载失败保留内置默认值 */

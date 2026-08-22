@@ -192,6 +192,7 @@ class SettingsOut(BaseModel):
     mode_options: list[str]
     default_mode: str
     default_rst: str
+    qso_columns: list[str]
     bands: list[BandRange]
     backup_interval_hours: int
     backup_keep: int
@@ -201,6 +202,7 @@ class SettingsUpdate(BaseModel):
     mode_options: list[str] | None = Field(None, min_length=1)
     default_mode: str | None = Field(None, min_length=1)
     default_rst: str | None = None
+    qso_columns: list[str] | None = Field(None, min_length=1)
     bands: list[BandRange] | None = None
     backup_interval_hours: int | None = Field(None, ge=1, le=8760)
     backup_keep: int | None = Field(None, ge=1, le=365)
